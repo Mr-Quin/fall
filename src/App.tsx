@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components'
-import Canvas from "./components/Canvas";
-import { MoodProvider } from "./components/Mood";
-import ChordDisplay from "./components/ChordDisplay";
-import {context} from 'tone';
+import HTML5Canvas from "./components/HTML5Canvas";
+import { context } from 'tone';
 
 const AppStyle = styled.div`
     width: 100vw;
@@ -27,15 +25,13 @@ const App = () => {
         setReady(true);
         context.state !== 'running' && context.resume()
     }
-    //TODO: Convert to WebGL (PixiJS)
 
     return (
         <AppStyle>
             {ready ?
-                <MoodProvider>
-                    <Canvas/>
-                    <ChordDisplay/>
-                </MoodProvider> :
+
+                <HTML5Canvas/> :
+
                 <StartButton onClick={handleStart}>Start</StartButton>}
         </AppStyle>
     );
