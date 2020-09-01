@@ -29,9 +29,7 @@ const App = () => {
     return (
         <AppStyle>
             {ready ?
-
                 <HTML5Canvas/> :
-
                 <StartButton onClick={handleStart}>Start</StartButton>}
         </AppStyle>
     );
