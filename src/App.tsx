@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import styled from 'styled-components'
-import HTML5Canvas from "./components/HTML5Canvas";
-import { context } from 'tone';
+import HTML5Canvas from './components/HTML5Canvas'
+import { context } from 'tone'
 
 const AppStyle = styled.div`
     width: 100vw;
@@ -19,20 +19,22 @@ const StartButton = styled.button`
 `
 
 const App = () => {
-    const [ready, setReady] = useState(false);
+    const [ready, setReady] = useState(false)
 
     const handleStart = () => {
-        setReady(true);
+        setReady(true)
         context.state !== 'running' && context.resume()
     }
 
     return (
         <AppStyle>
-            {ready ?
-                <HTML5Canvas/> :
-                <StartButton onClick={handleStart}>Start</StartButton>}
+            {ready ? (
+                <HTML5Canvas />
+            ) : (
+                <StartButton onClick={handleStart}>Start</StartButton>
+            )}
         </AppStyle>
-    );
+    )
 }
 
-export default App;
+export default App
