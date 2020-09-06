@@ -108,16 +108,16 @@ class AnimationExample extends PtsCanvas {
 
         // analyze sound
         const td = this.sound.freqDomainTo(this.space.size)
-        this.form.stroke('#fff').line(td) // visualize as points
+        // this.form.stroke('#fff').line(td) // visualize as points
 
         // starfield background
-        const filter = new Group()
+        // const filter = new Group()
         this.starField.forEach((p, i, arr) => {
             p.rotate2D(
                 Num.mapToRange(i, 0, this.starField.length, 0.5, 1) * 0.0005,
                 this.space.center
             )
-            if (td[i].y > this.space.width / 1.5) filter.push(p)
+            // if (td[i].y > this.space.width / 1.5) filter.push(p)
             this.form
                 // .fillOnly(`rgba(255,255,255, ${Num.mapToRange(i % 16, 0, 15, 0.6, 1)})`)
                 .fillOnly(['#9aeadd', '#cbe58e', '#f8bc04', '#e9e8ee'][i % 4])
@@ -130,7 +130,7 @@ class AnimationExample extends PtsCanvas {
                     'circle'
                 )
         })
-        this.form.strokeOnly('fff', 0.05).lines(filter.segments(3, 3))
+        // this.form.strokeOnly('fff', 0.05).lines(filter.segments(3, 3))
 
         // colliders
         let minRect = Rectangle.fromCenter(this.space.center, this.min)
