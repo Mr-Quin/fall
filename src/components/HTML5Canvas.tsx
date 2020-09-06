@@ -1,143 +1,60 @@
 import React from 'react'
 import styled from 'styled-components'
-import {
-    Pt,
-    Group,
-    Noise,
-    Create,
-    Curve,
-    Line,
-    Sound,
-    Const,
-    Form,
-    Num,
-    Color,
-} from 'pts'
+import { Pt, Group, Create, Line, Sound, Num, Geom, Rectangle, Bound, Circle, Color } from 'pts'
 import { PtsCanvas } from 'react-pts-canvas'
-import { Synth, Gain } from 'tone'
+import { MoodContext } from './Mood'
+import { mapValue, randomFromArray } from '../utils/utils'
+import { JCReverb, Compressor, Gain, Freeverb } from 'tone'
+import Chord from '../models/Chord'
 
 const StyledCanvas = styled.div`
     width: 100%;
     height: 100%;
 `
 
-interface String {
-    line: Group
-    refPts: Group
-    amplitude: number
-    freq: number
-    dampening: number
-    isOscillating: boolean
-    deltaTime: number
-}
-
-class String {
-    private readonly _curve: Group
-    private newP2: Pt
-    private newQ2: Pt
-    private synth: Synth
-    private gain: Gain
-
-    constructor(group: Group, audioDestination) {
-        this._curve = group
-        this.newP2 = group.p2
-        this.newQ2 = group.q2
-        this.line = new Group(group.p1, group.q1)
-        this.refPts = new Group(group.p2, group.q2)
-        this.amplitude = 0
-        this.freq = Math.PI * 2 * (Math.random() * 6 + 4)
-        this.gain = new Gain(0).connect(audioDestination)
-        this.synth = new Synth().connect(this.gain)
-        this.dampening = 1 / Math.E / (Line.magnitude(this.line) / 30)
-        this.deltaTime = 0
-        this.isOscillating = false
-    }
-
-    get curve() {
-        return Curve.bezier([
-            this.line.p1,
-            this.newP2,
-            this.newQ2,
-            this.line.q1,
-        ])
-    }
-
-    trigger = (): void => {
-        this.amplitude = 30
-        this.isOscillating = true
-        this.gain.gain.rampTo(1, 0.05)
-        this.synth.triggerAttackRelease(Math.random() * 6000 + 100, '1n')
-        console.log('trigger')
-    }
-
-    updateAmplitude = (): void => {
-        this.amplitude =
-            this.amplitude * Math.exp(-this.dampening * this.deltaTime)
-    }
-
-    updatePts = (): void => {
-        const displacement =
-            this.amplitude * Math.cos(this.deltaTime * this.freq) // A cos(ωt)
-        const slope = Line.slope(this.line.p1, this.line.q1)
-        const angle = Math.atan(slope)
-        this.newP2 = this.refPts.p1.$add(
-            -displacement * Math.sin(angle),
-            displacement * Math.cos(angle)
-        )
-        this.newQ2 = this.refPts.q1.$add(
-            -displacement * Math.sin(angle),
-            displacement * Math.cos(angle)
-        )
-    }
-
-    update = (): void => {
-        this.deltaTime += 1 / 10
-        this.updateAmplitude()
-        this.updatePts()
-        this.gain.gain.value = Num.normalizeValue(this.amplitude, 0, 30)
-        if (this.amplitude < 1) this.reset()
-    }
-
-    reset = (): void => {
-        this.gain.gain.rampTo(0, 0.05)
-        this.deltaTime = 0
-        this.amplitude = 0
-        this.isOscillating = false
-        console.log('reset')
-    }
-}
-
 class AnimationExample extends PtsCanvas {
     private world: any
     private dragging: boolean
     private indicator: Pt | undefined
-    private collider: Pt
-    private strings: String[]
-    private noiseGrid: any
-    private gain: any
+    private colliders: any
+    private strings: Chord[]
+    private starField: Group
+    private readonly compressor: any
+    private readonly gain: Gain
+    private readonly reverb: Freeverb
     private sound: Sound
+    static contextType = MoodContext
+    private min: number
 
     constructor(...args) {
         super(args as any)
-        this.noiseGrid = new Group()
+        this.starField = new Group()
+        this.min = 0
         this.dragging = false
         this.indicator = undefined
-        this.collider = new Pt()
+        this.colliders = new Group()
         this.strings = []
-        this.gain = new Gain(1).toDestination()
-        this.sound = Sound.from(this.gain, this.gain.context).analyze(512)
+        this.compressor = new Compressor(-30, 3).toDestination()
+        this.reverb = new Freeverb({ roomSize: 0.85, dampening: 600 }).connect(this.compressor)
+        this.gain = new Gain(0.5).connect(this.reverb)
+        this.sound = Sound.from(this.compressor, this.compressor.context).analyze(512, -100, -10)
     }
 
     _create(bound, space) {
-        let gd = Create.gridPts(this.space.innerBound, 20, 20)
-        this.noiseGrid = gd
-        // this.noiseGrid = Create.noisePts(gd, 0.05, 0.1, 20, 20);
+        const diag = Line.magnitude([
+            this.space.innerBound.bottomRight,
+            this.space.innerBound.topLeft,
+        ])
+        const diagRect = Rectangle.fromCenter(this.space.center, diag)
+        const diagBound = Bound.fromGroup(diagRect)
+        this.starField = Create.distributeRandom(diagBound, 512)
+        this.min = this.space.size.minValue().value
     }
 
-    hasCollision(pt: Pt, line: Group, threshold: number = 3): boolean {
+    collides(pt: Pt, line: Group, threshold: number = 3): boolean {
         const collinear = Line.collinear(line.p1, line.q1, pt, threshold)
-        const perpPt = Line.perpendicularFromPt(line, pt)
-        const intersect = Line.intersectLine2D([pt, perpPt], line)
+        const perpendicularPt = Line.perpendicularFromPt(line, pt)
+        const intersect = Line.intersectLine2D([pt, perpendicularPt], line)
 
         return !!(collinear && intersect) // return true if both collinear and intersect
     }
@@ -145,7 +62,6 @@ class AnimationExample extends PtsCanvas {
     // Override PtsCanvas' start function
     start(space, bound) {
         this._create(space, bound)
-        this.collider = new Pt(this.space.center)
     }
 
     // Override PtsCanvas' resize function
@@ -164,16 +80,12 @@ class AnimationExample extends PtsCanvas {
             if (type === 'drop' || type === 'up') {
                 console.log('release')
                 this.dragging = false
-                const line = Group.fromPtArray([
-                    this.indicator as Pt,
-                    new Pt(x, y),
-                ])
+                const line = Group.fromPtArray([this.indicator as Pt, new Pt(x, y)])
                 if (Line.magnitude(line) > 100) {
-                    // discard lines with magnitude < 100
-                    const intpt1 = line.interpolate(0.33)
-                    const intpt2 = line.interpolate(0.66)
-                    const string = new Group(line[0], intpt1, intpt2, line[1])
-                    this.strings.push(new String(string, this.gain))
+                    const intpt1 = line.interpolate(1 / 3)
+                    const intpt2 = line.interpolate(2 / 3)
+                    const chord = new Group(line[0], intpt1, intpt2, line[1])
+                    this.strings.push(new Chord(chord, this.gain))
                 }
                 this.indicator = undefined
             }
@@ -181,63 +93,107 @@ class AnimationExample extends PtsCanvas {
     }
 
     // Override PtsCanvas' animate function
-    animate(time, ftime) {
-        // analyze sound
-        let td = this.sound.freqDomainTo(this.space.size)
-        // this.form.line( td ); // visualize as points
+    animate(time, ftime): void {
+        // TODO: put things into their own class and call their render method
+        // Gradient background
+        let radial = this.form.gradient(['#051427', '#000'])
+        this.form
+            .fill(
+                radial(
+                    Circle.fromCenter(this.space.center, this.min / 5),
+                    Circle.fromCenter(this.space.center, this.min)
+                )
+            )
+            .rect(this.space.innerBound)
 
-        // noise background
-        this.noiseGrid.forEach((p, i) => {
-            // p.step(0.01, 0.01);
+        // analyze sound
+        const td = this.sound.freqDomainTo(this.space.size)
+        this.form.stroke('#fff').line(td) // visualize as points
+
+        // starfield background
+        const filter = new Group()
+        this.starField.forEach((p, i, arr) => {
+            p.rotate2D(
+                Num.mapToRange(i, 0, this.starField.length, 0.5, 1) * 0.0005,
+                this.space.center
+            )
+            if (td[i].y > this.space.width / 1.5) filter.push(p)
             this.form
-                .fillOnly(Color.hsb(i % 360, 100, 255).hex)
+                // .fillOnly(`rgba(255,255,255, ${Num.mapToRange(i % 16, 0, 15, 0.6, 1)})`)
+                .fillOnly(['#9aeadd', '#cbe58e', '#f8bc04', '#e9e8ee'][i % 4])
                 .point(
                     p,
                     Math.abs(
-                        15 * Num.normalizeValue(td[i].y, 0, this.space.size.x)
+                        Math.random() +
+                            6 * Num.normalizeValue(td[i % 256].y, 0, this.space.height / 1.2)
                     ),
                     'circle'
                 )
         })
+        this.form.strokeOnly('fff', 0.05).lines(filter.segments(3, 3))
 
-        // collider
-        this.collider.x = Math.cos(time / 600) * 400 + this.space.center.x
-        this.form.fillOnly('#fff').point(this.collider, 5, 'circle')
+        // colliders
+        let minRect = Rectangle.fromCenter(this.space.center, this.min)
+        let sides = Group.fromArray([
+            [minRect.p1.x, this.space.center.y],
+            [minRect.p2.x, this.space.center.y],
+            [this.space.center.x, minRect.p1.y],
+            [this.space.center.x, minRect.p2.y],
+        ])
+        let cycle = (t, i) =>
+            Num.cycle(
+                (i * (16 / (this.context.bpm / 60) / 4) + t / 1000) / (16 / (this.context.bpm / 60))
+            )
+        this.colliders = sides.segments(2, 2).map((line, i) => {
+            this.form.strokeOnly('fff', 0.1).line(line)
+            let pt = Geom.interpolate(line[0], line[1], cycle(time, i))
+            this.form.fillOnly('#fff').point(pt, 5, 'circle')
+            return pt
+        })
+
+        // tempo lines
+        for (let i = 3; i < 13; i++) {
+            this.form
+                .strokeOnly('fff', i % 3 === 0 ? 0.3 : 0.1)
+                .point(this.space.center, (this.min / 2) * Math.cos((Math.PI * i) / 24), 'circle')
+        }
 
         // loop through each string
         this.strings.forEach((string) => {
+            // string.pts.rotate2D(0.001, this.space.center)
             this.form.fillOnly('fff').points(string.line, 3, 'circle')
             this.form.strokeOnly('#fff', 0.3).line(string.curve)
-            const collide = this.hasCollision(this.collider, string.line, 5)
+            this.colliders.forEach((collider) => {
+                const collide = this.collides(collider, string.line, 4)
+                if (string.canTrigger && collide) {
+                    string.trigger(randomFromArray(this.context.keys))
+                }
+            })
             if (string.isOscillating) {
                 string.update()
-            } else if (collide) {
-                string.trigger()
             }
         })
 
-        // draw the mouse indicator line
-        if (this.indicator) {
-            // this.temp.rotate2D(Const.one_degree / 10, this.space.center)
-            this.form
-                .stroke('#fff', 1, 'round', 'round')
-                .line([this.indicator, this.space.pointer])
+        // draw the mouse indicator line and octave number
+        if (this.dragging) {
+            const lineMagnitude = Line.magnitude(
+                new Group(this.indicator as Pt, this.space.pointer)
+            )
+            this.form.text(
+                this.space.pointer.$add(20, 20),
+                (mapValue(lineMagnitude, 100, 1200, 8, 0) << 0).toString()
+            )
+            this.form.stroke('#fff', 1, 'round', 'round').line([this.indicator, this.space.pointer])
         }
 
         // draw a center point
-        this.form.fillOnly('#f00').point(this.space.center, 3, 'circle')
+        this.form.fillOnly('#fff').point(this.space.center, 3, 'circle')
     }
 }
 
 const HTML5Canvas = ({ ...props }) => {
     console.log('canvas render')
-    return (
-        <StyledCanvas
-            as={AnimationExample}
-            background={'#123'}
-            name={'points'}
-        />
-    )
+    return <StyledCanvas as={AnimationExample} background={'#010b19'} name={'points'} />
 }
 
 export default HTML5Canvas
