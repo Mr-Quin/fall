@@ -25,11 +25,13 @@ class AnimationExample extends PtsCanvas {
     private sound: Sound
     static contextType = MoodContext
     private min: number
+    private colliderTracks: Group[]
 
     constructor(...args) {
         super(args as any)
         this.starField = new Group()
         this.min = 0
+        this.colliderTracks = [new Group()]
         this.dragging = false
         this.indicator = undefined
         this.colliders = new Group()
@@ -49,6 +51,13 @@ class AnimationExample extends PtsCanvas {
         const diagBound = Bound.fromGroup(diagRect)
         this.starField = Create.distributeRandom(diagBound, 512)
         this.min = this.space.size.minValue().value
+        const minRect = Rectangle.fromCenter(this.space.center, this.min)
+        this.colliderTracks = Group.fromArray([
+            [minRect.p1.x, this.space.center.y],
+            [minRect.p2.x, this.space.center.y],
+            [this.space.center.x, minRect.p1.y],
+            [this.space.center.x, minRect.p2.y],
+        ]).segments(2, 2)
     }
 
     collides(pt: Pt, line: Group, threshold: number = 3): boolean {
@@ -96,55 +105,43 @@ class AnimationExample extends PtsCanvas {
     animate(time, ftime): void {
         // TODO: put things into their own class and call their render method
         // Gradient background
-        let radial = this.form.gradient(['#051427', '#000'])
-        this.form
-            .fill(
-                radial(
-                    Circle.fromCenter(this.space.center, this.min / 5),
-                    Circle.fromCenter(this.space.center, this.min)
-                )
-            )
-            .rect(this.space.innerBound)
+        // let radial = this.form.gradient(['#0e061a', '#000'])
+        // this.form
+        //     .fill(
+        //         radial(
+        //             Circle.fromCenter(this.space.center, this.min / 5),
+        //             Circle.fromCenter(this.space.center, this.min)
+        //         )
+        //     )
+        //     .rect(this.space.outerBound)
 
         // analyze sound
         const td = this.sound.freqDomainTo(this.space.size)
         // this.form.stroke('#fff').line(td) // visualize as points
 
         // starfield background
-        // const filter = new Group()
         this.starField.forEach((p, i, arr) => {
             p.rotate2D(
                 Num.mapToRange(i, 0, this.starField.length, 0.5, 1) * 0.0005,
                 this.space.center
             )
-            // if (td[i].y > this.space.width / 1.5) filter.push(p)
             this.form
-                // .fillOnly(`rgba(255,255,255, ${Num.mapToRange(i % 16, 0, 15, 0.6, 1)})`)
                 .fillOnly(['#9aeadd', '#cbe58e', '#f8bc04', '#e9e8ee'][i % 4])
                 .point(
                     p,
                     Math.abs(
-                        Math.random() +
-                            6 * Num.normalizeValue(td[i % 256].y, 0, this.space.height / 1.2)
+                        0.8 + 6 * Num.normalizeValue(td[i % 256].y, 0, this.space.height / 1.2)
                     ),
                     'circle'
                 )
         })
-        // this.form.strokeOnly('fff', 0.05).lines(filter.segments(3, 3))
 
         // colliders
-        let minRect = Rectangle.fromCenter(this.space.center, this.min)
-        let sides = Group.fromArray([
-            [minRect.p1.x, this.space.center.y],
-            [minRect.p2.x, this.space.center.y],
-            [this.space.center.x, minRect.p1.y],
-            [this.space.center.x, minRect.p2.y],
-        ])
         let cycle = (t, i) =>
             Num.cycle(
                 (i * (16 / (this.context.bpm / 60) / 4) + t / 1000) / (16 / (this.context.bpm / 60))
             )
-        this.colliders = sides.segments(2, 2).map((line, i) => {
+        this.colliders = this.colliderTracks.map((line, i) => {
             this.form.strokeOnly('fff', 0.1).line(line)
             let pt = Geom.interpolate(line[0], line[1], cycle(time, i))
             this.form.fillOnly('#fff').point(pt, 5, 'circle')
@@ -157,6 +154,8 @@ class AnimationExample extends PtsCanvas {
                 .strokeOnly('fff', i % 3 === 0 ? 0.3 : 0.1)
                 .point(this.space.center, (this.min / 2) * Math.cos((Math.PI * i) / 24), 'circle')
         }
+        // draw a center point
+        this.form.fillOnly('#fff').point(this.space.center, 3, 'circle')
 
         // loop through each string
         this.strings.forEach((string) => {
@@ -177,17 +176,14 @@ class AnimationExample extends PtsCanvas {
         // draw the mouse indicator line and octave number
         if (this.dragging) {
             const lineMagnitude = Line.magnitude(
-                new Group(this.indicator as Pt, this.space.pointer)
+                Group.fromArray([this.indicator, this.space.pointer])
             )
             this.form.text(
                 this.space.pointer.$add(20, 20),
                 (mapValue(lineMagnitude, 100, 1200, 8, 0) << 0).toString()
             )
-            this.form.stroke('#fff', 1, 'round', 'round').line([this.indicator, this.space.pointer])
+            this.form.stroke('#fff', 1).line([this.indicator, this.space.pointer])
         }
-
-        // draw a center point
-        this.form.fillOnly('#fff').point(this.space.center, 3, 'circle')
     }
 }
 
