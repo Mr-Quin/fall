@@ -26,9 +26,3 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
   monospace;
 }
-
-/*Backup style in case styled-components does not work with Pts*/
-.points {
-  width: 100%;
-  height: 100%;
-}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
-import HTML5Canvas from './components/HTML5Canvas'
+import ThreeCanvas from './components/ThreeCanvas.js'
 import { context } from 'tone'
 import { MoodProvider } from './components/Mood'
 import ChordDisplay from './components/ChordDisplay'
@@ -33,7 +33,7 @@ const App = () => {
             {ready ? (
                 <MoodProvider>
                     <ChordDisplay />
-                    <HTML5Canvas />
+                    <ThreeCanvas />
                 </MoodProvider>
             ) : (
                 <StartButton onClick={handleStart}>Start</StartButton>
