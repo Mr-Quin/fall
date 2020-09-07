@@ -130,7 +130,6 @@ const ThreeCanvas = ({ ...props }) => {
                 <meshStandardMaterial attach="material" color="#00ffff" depthTest={false} />
             </mesh>
             <Swarm mouse={mouse} count={20000} />
-            //
             <Effect down={down} />
         </StyledCanvas>
     )
