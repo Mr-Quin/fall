@@ -32,8 +32,8 @@ const App = () => {
         <AppStyle>
             {ready ? (
                 <MoodProvider>
-                    <ChordDisplay />
                     <ThreeCanvas />
+                    <ChordDisplay />
                 </MoodProvider>
             ) : (
                 <StartButton onClick={handleStart}>Start</StartButton>
