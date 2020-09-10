@@ -1,22 +1,13 @@
 import * as THREE from 'three'
-import React, { Suspense, useCallback, useEffect, useRef, useMemo, useState } from 'react'
-import { Canvas, extend, useFrame, useThree } from 'react-three-fiber'
-import { Stats, Stars } from 'drei'
+import React from 'react'
+import { Canvas } from 'react-three-fiber'
+import { Stats, Stars, Ring } from 'drei'
 import { useMood } from '../Mood'
 import Effects from './Effects'
 import StarField from './StarField'
 import Controls from './Controls'
 import Chord from './Chord'
 import Colliders from './Colliders'
-
-const Ring = () => {
-    return (
-        <mesh>
-            <ringBufferGeometry attach={'geometry'} args={[9.8, 10, 64]} />
-            <meshStandardMaterial attach={'material'} color={'lightblue'} emissive={'lightblue'} />
-        </mesh>
-    )
-}
 
 THREE.Object3D.DefaultUp.set(0, 0, 1)
 const ThreeCanvas = ({ ...props }) => {
@@ -29,7 +20,13 @@ const ThreeCanvas = ({ ...props }) => {
             {/*<ambientLight intensity={0.2} />*/}
             <StarField count={5000} />
             <Chord />
-            <Ring />
+            <Ring args={[9.8, 10, 64]}>
+                <meshStandardMaterial
+                    attach={'material'}
+                    color={'lightblue'}
+                    emissive={'lightblue'}
+                />
+            </Ring>
             <Colliders />
             <Effects />
         </Canvas>
