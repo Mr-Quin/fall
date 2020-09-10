@@ -1,7 +1,8 @@
 import React, { useMemo, useRef } from 'react'
-import { extend, useFrame, useThree } from 'react-three-fiber'
+import { extend, useFrame } from 'react-three-fiber'
 import * as THREE from 'three'
 import { shaderMaterial } from 'drei'
+import useTurntable from '../../hooks/Three/useTurntable'
 
 const StarMaterial = shaderMaterial(
     {},
@@ -21,7 +22,7 @@ void main() {
 extend({ StarMaterial })
 
 const StarField = ({ count = 1000 }) => {
-    const mesh = useRef()
+    const instance = useTurntable('z', 0.00000002)
 
     const dummyObj = useMemo(() => new THREE.Object3D(), [])
     const dummyColor = useMemo(() => new THREE.Color(), [])
@@ -65,22 +66,21 @@ const StarField = ({ count = 1000 }) => {
             dummyObj.scale.set(scale, scale, scale)
             dummyObj.updateMatrix()
 
-            mesh.current.setMatrixAt(i, dummyObj.matrix)
-            mesh.current.rotation.z += 0.00000002
+            instance.current.setMatrixAt(i, dummyObj.matrix)
         })
-        mesh.current.instanceMatrix.needsUpdate = true
+        instance.current.instanceMatrix.needsUpdate = true
     })
 
     const uniforms = useMemo(() => {}, [])
 
     return (
         <>
-            <instancedMesh ref={mesh} args={[null, null, count]}>
+            <instancedMesh ref={instance} args={[null, null, count]}>
                 <dodecahedronBufferGeometry attach="geometry" args={[0.1, 0]}>
                     <bufferAttribute attachObject={['attributes', 'color']} args={[colors, 3]} />
                 </dodecahedronBufferGeometry>
-                {/*<meshPhongMaterial attach={'material'} vertexColors />*/}
-                <starMaterial attach={'material'} vertexColors />
+                <meshPhongMaterial attach={'material'} vertexColors emissive={'#ffffff'} />
+                {/*<starMaterial attach={'material'} vertexColors />*/}
             </instancedMesh>
         </>
     )
