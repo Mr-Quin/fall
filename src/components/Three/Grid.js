@@ -1,21 +1,14 @@
-import React, { useCallback, forwardRef, useRef } from 'react'
+import React, { forwardRef, useRef } from 'react'
 import { useThree } from 'react-three-fiber'
+import useDrag from '../../hooks/useDrag'
 
-const Grid = forwardRef(({ onClick, visible = true, ...props }, ref) => {
+const Grid = forwardRef(({ onDrag, onStart, onEnd, visible = true, ...props }, ref) => {
     const grid = useRef()
     const { raycaster } = useThree()
-
-    const onMouseDown = useCallback(
-        (e) => {
-            const intersects = raycaster.intersectObject(grid.current)
-            const intersectionVec = intersects[0].point
-            onClick(intersectionVec)
-        },
-        [onClick]
-    )
+    const bind = useDrag(onDrag, onStart, onEnd, raycaster.ray)
 
     return (
-        <mesh onClick={onMouseDown} ref={grid}>
+        <mesh {...bind} ref={grid}>
             <planeGeometry attach={'geometry'} args={[100, 100, 100, 100]} />
             <meshStandardMaterial
                 attach={'material'}

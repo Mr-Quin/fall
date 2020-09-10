@@ -1,56 +1,67 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { useFrame, useThree } from 'react-three-fiber'
+import { useFrame } from 'react-three-fiber'
 import * as THREE from 'three'
 import Grid from './Grid'
+import { chunk } from '../../utils/utils'
 
-const Chord = ({ ...props }) => {
-    const grid = useRef()
-    const instance = useRef()
-    const { raycaster } = useThree()
-
-    const dummy = useMemo(() => new THREE.Object3D(), [])
-
-    const [count, setCount] = useState([]) //TODO: change to reducer
-    const scale = 0.2
-
-    const addVec = useCallback((vec) => {
-        setCount((prevState) => [...prevState, vec])
-    }, [])
-    const onUpdate = useCallback((self) => self.setFromPoints(count), [count])
-
-    useFrame((state) => {
-        count.forEach((vec, i) => {
-            dummy.position.set(vec.x, vec.y, vec.z)
-            dummy.scale.set(scale, scale, scale)
-            dummy.updateMatrix()
-            instance.current.setMatrixAt(i, dummy.matrix)
-        })
-        instance.current.count = count.length
-        instance.current.instanceMatrix.needsUpdate = true
-    })
-
+const String = ({ dStart, dEnd, ...props }) => {
+    const [start, setStart] = useState(dStart)
+    const [end, setEnd] = useState(dEnd)
+    const vertices = useMemo(() => [start, end].map((vec) => new THREE.Vector3(...vec)), [
+        start,
+        end,
+    ])
+    const update = useCallback(
+        (self) => ((self.verticesNeedUpdate = true), self.computeBoundingSphere()),
+        []
+    )
     return (
         <>
             <line>
-                <bufferGeometry attach="geometry" onUpdate={onUpdate} />
-                <lineBasicMaterial
-                    attach="material"
-                    color={'#ffffff'}
-                    linewidth={10}
-                    linecap={'round'}
-                    linejoin={'round'}
-                />
+                <geometry attach="geometry" vertices={vertices} onUpdate={update} />
+                <lineBasicMaterial attach="material" color="white" />
             </line>
-            <instancedMesh ref={instance} args={[null, null, 1000]}>
-                <sphereBufferGeometry attach={'geometry'} args={[1, 8, 8]} />
-                <meshStandardMaterial
-                    attach={'material'}
-                    color={'lightblue'}
-                    emissive={'lightblue'}
-                    emissiveIntensity={1}
-                />
-            </instancedMesh>
-            <Grid onClick={addVec} visible />
+            <group>
+                <mesh position={start}>
+                    <sphereBufferGeometry attach="geometry" args={[0.2, 16, 16]} />
+                    <meshStandardMaterial
+                        attach={'material'}
+                        color={'lightblue'}
+                        emissive={'lightblue'}
+                        emissiveIntensity={1}
+                    />
+                </mesh>
+                <mesh position={end}>
+                    <sphereBufferGeometry attach="geometry" args={[0.2, 16, 16]} />
+                    <meshStandardMaterial
+                        attach={'material'}
+                        color={'lightblue'}
+                        emissive={'lightblue'}
+                        emissiveIntensity={1}
+                    />
+                </mesh>
+            </group>
+        </>
+    )
+}
+
+const Chord = ({ ...props }) => {
+    const [count, setCount] = useState([]) //TODO: change to reducer
+
+    const addVec = useCallback((ray) => {
+        const vec = ray.origin.add(ray.direction.multiplyScalar(30))
+        setCount((prevState) => [...prevState, vec.clone()])
+    }, [])
+
+    return (
+        <>
+            {count.length % 2 === 0
+                ? chunk(count, 2).map((vec, i) => {
+                      return <String dStart={vec[0].toArray()} dEnd={vec[1].toArray()} key={i} />
+                  })
+                : null}
+
+            <Grid onStart={addVec} onDrag={addVec} visible />
         </>
     )
 }

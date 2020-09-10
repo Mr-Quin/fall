@@ -11,14 +11,20 @@ import Colliders from './Colliders'
 
 THREE.Object3D.DefaultUp.set(0, 0, 1)
 const ThreeCanvas = ({ ...props }) => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
     console.log('canvas render')
+
     return (
-        <Canvas gl2={true} camera={{ fov: 75, position: [15, 25, 15], focus: 0.1 }}>
+        <Canvas
+            pixelRatio={Math.min(2, isMobile ? window.devicePixelRatio : 1)}
+            gl2={true}
+            camera={{ fov: 75, position: [15, 25, 15], focus: 0.1 }}
+        >
             <Controls />
             <Stats />
-            {/*<Stars saturation={1} />*/}
+            <Stars saturation={1} />
             {/*<ambientLight intensity={0.2} />*/}
-            <StarField count={5000} />
+            {/*<StarField count={5000} />*/}
             <Chord />
             <Ring args={[9.8, 10, 64]}>
                 <meshStandardMaterial

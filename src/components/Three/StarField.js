@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react'
+import React, { useMemo } from 'react'
 import { extend, useFrame } from 'react-three-fiber'
 import * as THREE from 'three'
 import { shaderMaterial } from 'drei'
@@ -10,6 +10,7 @@ const StarMaterial = shaderMaterial(
 void main() {
     vColor = color;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0);
+    gl_PointSize = 5.0;
 }
 `,
     `varying vec3 vColor;
@@ -22,8 +23,9 @@ void main() {
 extend({ StarMaterial })
 
 const StarField = ({ count = 1000 }) => {
-    const instance = useTurntable('z', 0.00000002)
+    const instance = useTurntable('z', 0.0001)
 
+    const dummyVec = useMemo(() => new THREE.Vector3(), [])
     const dummyObj = useMemo(() => new THREE.Object3D(), [])
     const dummyColor = useMemo(() => new THREE.Color(), [])
 
@@ -44,12 +46,15 @@ const StarField = ({ count = 1000 }) => {
 
             dummyColor.setHSL(i / count, 0.9, 0.9)
             colors.push(dummyColor.r, dummyColor.g, dummyColor.b)
+
+            dummyVec.set(xFactor, yFactor, zFactor)
+            positions.push(dummyVec.toArray())
         }
         return [temp, new Float32Array(colors), new Float32Array(positions)]
     }, [count])
 
     useFrame((state) => {
-        // Run through the randomized data to calculate some movement
+        //TODO:Change to custom shader
         particles.forEach((particle, i) => {
             let { t, scale, factor, speed, xFactor, yFactor, zFactor } = particle
 
@@ -78,6 +83,10 @@ const StarField = ({ count = 1000 }) => {
             <instancedMesh ref={instance} args={[null, null, count]}>
                 <dodecahedronBufferGeometry attach="geometry" args={[0.1, 0]}>
                     <bufferAttribute attachObject={['attributes', 'color']} args={[colors, 3]} />
+                    {/*<bufferAttribute*/}
+                    {/*    attachObject={['attributes', 'position']}*/}
+                    {/*    args={[positions, 3]}*/}
+                    {/*/>*/}
                 </dodecahedronBufferGeometry>
                 <meshPhongMaterial attach={'material'} vertexColors emissive={'#ffffff'} />
                 {/*<starMaterial attach={'material'} vertexColors />*/}
