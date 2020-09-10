@@ -1,15 +1,36 @@
 import React, { useMemo, useRef } from 'react'
-import { useFrame, useThree } from 'react-three-fiber'
+import { extend, useFrame, useThree } from 'react-three-fiber'
 import * as THREE from 'three'
+import { shaderMaterial } from 'drei'
 
-const StarField = ({ count = 1000, mouse }) => {
+const StarMaterial = shaderMaterial(
+    {},
+    `varying vec3 vColor;
+void main() {
+    vColor = color;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0);
+}
+`,
+    `varying vec3 vColor;
+void main() {
+    gl_FragColor = vec4(vColor, 1.0);
+}
+`
+)
+
+extend({ StarMaterial })
+
+const StarField = ({ count = 1000 }) => {
     const mesh = useRef()
 
-    const dummy = useMemo(() => new THREE.Object3D(), [])
+    const dummyObj = useMemo(() => new THREE.Object3D(), [])
+    const dummyColor = useMemo(() => new THREE.Color(), [])
 
     // Generate some random positions, speed factors and timings
-    const particles = useMemo(() => {
+    const [particles, colors, positions] = useMemo(() => {
         const temp = []
+        const colors = []
+        const positions = []
         for (let i = 0; i < count; i++) {
             const t = Math.random() * 100
             const scale = Math.max(Math.random(), 0.3)
@@ -18,9 +39,12 @@ const StarField = ({ count = 1000, mouse }) => {
             const xFactor = -50 + Math.random() * 100
             const yFactor = -50 + Math.random() * 100
             const zFactor = -50 + Math.random() * 100
-            temp.push({ t, scale, factor, speed, xFactor, yFactor, zFactor, mx: 0, my: 0 })
+            temp.push({ t, scale, factor, speed, xFactor, yFactor, zFactor })
+
+            dummyColor.setHSL(i / count, 0.9, 0.9)
+            colors.push(dummyColor.r, dummyColor.g, dummyColor.b)
         }
-        return temp
+        return [temp, new Float32Array(colors), new Float32Array(positions)]
     }, [count])
 
     useFrame((state) => {
@@ -31,35 +55,32 @@ const StarField = ({ count = 1000, mouse }) => {
             t = particle.t += speed / 200
             const a = Math.cos(t) + Math.sin(t * 1) / 10
             const b = Math.sin(t) + Math.cos(t * 2) / 10
-            // particle.mx += (mouse.current[0] - particle.mx) * 0.01
-            // particle.my += (mouse.current[1] * -1 - particle.my) * 0.01
+
             // Update the dummy object
-            dummy.position.set(
-                (particle.mx / 10) * a +
-                    xFactor +
-                    Math.cos((t / 10) * factor) +
-                    (Math.sin(t * 1) * factor) / 10,
-                (particle.my / 10) * b +
-                    yFactor +
-                    Math.sin((t / 10) * factor) +
-                    (Math.cos(t * 2) * factor) / 10,
-                (particle.my / 10) * b +
-                    zFactor +
-                    Math.cos((t / 10) * factor) +
-                    (Math.sin(t * 3) * factor) / 10
+            dummyObj.position.set(
+                xFactor + Math.cos((t / 10) * factor) + (Math.sin(t * 1) * factor) / 10,
+                yFactor + Math.sin((t / 10) * factor) + (Math.cos(t * 2) * factor) / 10,
+                zFactor + Math.cos((t / 10) * factor) + (Math.sin(t * 3) * factor) / 10
             )
-            dummy.scale.set(scale, scale, scale)
-            dummy.updateMatrix()
-            // And apply the matrix to the instanced item
-            mesh.current.setMatrixAt(i, dummy.matrix)
+            dummyObj.scale.set(scale, scale, scale)
+            dummyObj.updateMatrix()
+
+            mesh.current.setMatrixAt(i, dummyObj.matrix)
+            mesh.current.rotation.z += 0.00000002
         })
         mesh.current.instanceMatrix.needsUpdate = true
     })
+
+    const uniforms = useMemo(() => {}, [])
+
     return (
         <>
             <instancedMesh ref={mesh} args={[null, null, count]}>
-                <dodecahedronBufferGeometry attach="geometry" args={[0.1, 0]} />
-                <meshPhongMaterial attach="material" color={'#050505'} emissive={'#ffffff'} />
+                <dodecahedronBufferGeometry attach="geometry" args={[0.1, 0]}>
+                    <bufferAttribute attachObject={['attributes', 'color']} args={[colors, 3]} />
+                </dodecahedronBufferGeometry>
+                {/*<meshPhongMaterial attach={'material'} vertexColors />*/}
+                <starMaterial attach={'material'} vertexColors />
             </instancedMesh>
         </>
     )
