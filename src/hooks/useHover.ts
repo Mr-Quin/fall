@@ -1,6 +1,10 @@
 import { useCallback, useState } from 'react'
 
-const useHover = (stopPropagation = true) => {
+interface useHoverFunc {
+    (stopPropagation: boolean): any
+}
+
+const useHover: useHoverFunc = (stopPropagation = true) => {
     const [hovered, setHover] = useState(false)
     const hover = useCallback((e) => {
         if (stopPropagation) e.stopPropagation()

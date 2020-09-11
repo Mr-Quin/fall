@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useThree } from 'react-three-fiber'
 
-const useDrag = (onDrag, onStart, onEnd, returnValue = null): any => {
+interface useDragFunc {
+    (onDrag: Function, onStart?: Function, onEnd?: Function, returnValue?: any): any
+}
+
+const useDrag: useDragFunc = (onDrag, onStart, onEnd, returnValue = null) => {
     const [active, setActive] = useState(false)
     const activeRef = useRef(false)
     const { raycaster } = useThree()

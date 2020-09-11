@@ -1,22 +1,26 @@
-import { useEffect, useState } from "react";
-import { Point } from "../Types";
+import { useEffect, useState } from 'react'
+import { Point } from '../Types'
 
-const useMousePosition = (): Point => {
-    const [mousePosition, setMousePosition] = useState<Point>({x: 0, y: 0})
+interface useMousePositionFunc {
+    (): Point
+}
+
+const useMousePosition: useMousePositionFunc = () => {
+    const [mousePosition, setMousePosition] = useState<Point>({ x: 0, y: 0 })
 
     const handleMouseMove = (e: MouseEvent) => {
-        setMousePosition({x: e.pageX, y: e.pageY})
+        setMousePosition({ x: e.pageX, y: e.pageY })
     }
 
     useEffect(() => {
         window.addEventListener('mousemove', handleMouseMove)
 
-        return (() => {
+        return () => {
             window.removeEventListener('mousemove', handleMouseMove)
-        })
-    }, []);
+        }
+    }, [])
 
-    return mousePosition;
+    return mousePosition
 }
 
-export default useMousePosition;
+export default useMousePosition
