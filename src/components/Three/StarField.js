@@ -4,24 +4,6 @@ import * as THREE from 'three'
 import { shaderMaterial } from 'drei'
 import useTurntable from '../../hooks/Three/useTurntable'
 
-const StarMaterial = shaderMaterial(
-    {},
-    `varying vec3 vColor;
-void main() {
-    vColor = color;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0);
-    gl_PointSize = 5.0;
-}
-`,
-    `varying vec3 vColor;
-void main() {
-    gl_FragColor = vec4(vColor, 1.0);
-}
-`
-)
-
-extend({ StarMaterial })
-
 const StarField = ({ count = 1000 }) => {
     const instance = useTurntable('z', 0.0001)
 
@@ -83,13 +65,8 @@ const StarField = ({ count = 1000 }) => {
             <instancedMesh ref={instance} args={[null, null, count]}>
                 <dodecahedronBufferGeometry attach="geometry" args={[0.1, 0]}>
                     <bufferAttribute attachObject={['attributes', 'color']} args={[colors, 3]} />
-                    {/*<bufferAttribute*/}
-                    {/*    attachObject={['attributes', 'position']}*/}
-                    {/*    args={[positions, 3]}*/}
-                    {/*/>*/}
                 </dodecahedronBufferGeometry>
                 <meshPhongMaterial attach={'material'} vertexColors emissive={'#ffffff'} />
-                {/*<starMaterial attach={'material'} vertexColors />*/}
             </instancedMesh>
         </>
     )
