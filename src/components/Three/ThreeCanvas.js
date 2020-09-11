@@ -9,7 +9,7 @@ import Controls from './Controls'
 import Chord from './Chord'
 import Colliders from './Colliders'
 
-THREE.Object3D.DefaultUp.set(0, 0, 1)
+THREE.Object3D.DefaultUp.set(0, 0, 1) // z up
 const ThreeCanvas = ({ ...props }) => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
     // const mood = useMood()
