@@ -1,29 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useThree } from 'react-three-fiber'
 
 const useDrag = (onDrag, onStart, onEnd, returnValue = null): any => {
     const [active, setActive] = useState(false)
     const activeRef = useRef(false)
+    const { raycaster } = useThree()
 
     useEffect(() => void (activeRef.current = active))
 
     const down = useCallback(
         (e) => {
-            if (e.buttons !== 1) return
+            if (e.button !== 0) return
             setActive(true)
             e.stopPropagation()
-            if (onStart) onStart(returnValue)
-            // e.target.setPointerCapture(e.pointerId)
+            if (onStart) onStart(raycaster.ray)
         },
         [onStart, returnValue]
     )
 
     const up = useCallback(
         (e) => {
-            if (e.buttons !== 1) return
+            if (e.button !== 0) return
             setActive(false)
             e.stopPropagation()
-            // e.target.releasePointerCapture(e.pointerId)
-            if (onEnd) onEnd(returnValue)
+            if (onEnd) onEnd(raycaster.ray)
         },
         [onEnd, returnValue]
     )
@@ -33,7 +33,7 @@ const useDrag = (onDrag, onStart, onEnd, returnValue = null): any => {
             if (e.buttons !== 1) return
             if (activeRef.current) {
                 e.stopPropagation()
-                onDrag(returnValue)
+                onDrag(raycaster.ray)
             }
         },
         [onDrag, returnValue]

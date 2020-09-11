@@ -5,7 +5,8 @@ import useDrag from '../../hooks/useDrag'
 const Grid = forwardRef(({ onDrag, onStart, onEnd, visible = true, ...props }, ref) => {
     const grid = useRef()
     const { raycaster } = useThree()
-    const bind = useDrag(onDrag, onStart, onEnd, raycaster.ray)
+    const ray = raycaster.ray
+    const bind = useDrag(onDrag, onStart, onEnd)
 
     return (
         <mesh {...bind} ref={grid}>

@@ -12,6 +12,7 @@ import Colliders from './Colliders'
 THREE.Object3D.DefaultUp.set(0, 0, 1)
 const ThreeCanvas = ({ ...props }) => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    // const mood = useMood()
     console.log('canvas render')
 
     return (
@@ -23,7 +24,7 @@ const ThreeCanvas = ({ ...props }) => {
             <Controls />
             <Stats />
             <Stars saturation={1} />
-            {/*<ambientLight intensity={0.2} />*/}
+            {/*<ambientLight intensity={0.1} />*/}
             {/*<StarField count={5000} />*/}
             <Chord />
             <Ring args={[9.8, 10, 64]}>
