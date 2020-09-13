@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
-import ThreeCanvas from './components/Three/ThreeCanvas.js'
 import { context } from 'tone'
 import { MoodProvider } from './components/Mood'
 import ChordDisplay from './components/ChordDisplay'
+import SceneViewer from './components/SceneViewer'
 
 const AppStyle = styled.div`
     width: 100vw;
@@ -32,7 +32,7 @@ const App = () => {
         <AppStyle>
             {ready ? (
                 <MoodProvider>
-                    <ThreeCanvas />
+                    <SceneViewer />
                     <ChordDisplay />
                 </MoodProvider>
             ) : (
