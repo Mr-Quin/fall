@@ -14,7 +14,7 @@ const SceneComponent = (props) => {
     } = props
 
     const [loaded, setLoaded] = useState(false)
-    const [scene, setScene] = useState(null)
+    const [scene, setScene] = useState<any>(null)
 
     useEffect(() => {
         if (window) {
@@ -42,7 +42,6 @@ const SceneComponent = (props) => {
                 adaptToDeviceRatio
             )
             const scene = new Scene(engine, sceneOptions)
-            // @ts-ignore
             setScene(scene)
             if (scene.isReady()) {
                 onSceneReady(scene)
@@ -60,7 +59,6 @@ const SceneComponent = (props) => {
 
         return () => {
             if (scene !== null) {
-                // @ts-ignore
                 scene.dispose()
             }
         }
