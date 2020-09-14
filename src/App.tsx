@@ -31,11 +31,11 @@ const App = () => {
     return (
         <AppStyle>
             {ready ? (
-                <MoodProvider>
-                    <SceneViewer />
-                    <ChordDisplay />
-                </MoodProvider>
+                // <MoodProvider>
+                <SceneViewer />
             ) : (
+                // <ChordDisplay />
+                // </MoodProvider>
                 <StartButton onClick={handleStart}>Start</StartButton>
             )}
         </AppStyle>

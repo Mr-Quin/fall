@@ -8,16 +8,18 @@ import {
     MeshBuilder,
     ArcRotateCamera,
     ActionManager,
-    InterpolateValueAction,
     DoNothingAction,
     GlowLayer,
     StandardMaterial,
     Space,
     Axis,
     Matrix,
+    PointerEventTypes,
 } from '@babylonjs/core'
 import SceneComponent from './SceneComponent'
 import Constellation from '../models/Constellation'
+import { Transport } from 'tone'
+import { Chord } from '@tonaljs/tonal'
 
 const StyledScene = styled(SceneComponent)`
     width: 100vw;
@@ -31,6 +33,8 @@ let plan1
 
 const onSceneReady = (scene) => {
     const canvas = scene.getEngine().getRenderingCanvas()
+    Transport.bpm.value = 60
+    Transport.start()
     /**
      * Camera setup
      */
@@ -48,8 +52,6 @@ const onSceneReady = (scene) => {
 
     // Our built-in 'ground' shape.
     const ground = MeshBuilder.CreateGround('ground', { width: 6, height: 6 }, scene)
-    ground.actionManager = new ActionManager(scene)
-    ground.actionManager.registerAction(new DoNothingAction(ActionManager.OnPickTrigger))
 
     const glow = new GlowLayer('glow', scene, { mainTextureSamples: 2 })
 
@@ -67,7 +69,7 @@ const onSceneReady = (scene) => {
     const constellation = new Constellation(scene)
 
     const getGroundPosition = () => {
-        // Use a predicate to get position on the ground
+        //TODO: extract to click trigger action with code execution
         const pickInfo = scene.pick(scene.pointerX, scene.pointerY, function (mesh) {
             return mesh === ground
         })
@@ -103,31 +105,46 @@ const onSceneReady = (scene) => {
         }
     }
 
-    canvas.addEventListener('pointerdown', onPointerDown, false)
-    canvas.addEventListener('pointerup', onPointerUp, false)
-
-    scene.onDispose = function () {
-        canvas.removeEventListener('pointerdown', onPointerDown)
-        canvas.removeEventListener('pointerup', onPointerUp)
-    }
+    scene.onPointerObservable.add((pointerInfo) => {
+        const { type, event } = pointerInfo
+        switch (type) {
+            case PointerEventTypes.POINTERDOWN:
+                console.log('POINTER DOWN')
+                onPointerDown(event)
+                break
+            case PointerEventTypes.POINTERUP:
+                console.log('POINTER UP')
+                onPointerUp(event)
+                break
+            case PointerEventTypes.POINTERMOVE:
+                console.log('POINTER MOVE')
+                break
+            case PointerEventTypes.POINTERWHEEL:
+                console.log('POINTER WHEEL')
+                break
+            case PointerEventTypes.POINTERPICK:
+                console.log('POINTER PICK')
+                break
+            case PointerEventTypes.POINTERTAP:
+                console.log('POINTER TAP')
+                break
+            case PointerEventTypes.POINTERDOUBLETAP:
+                console.log('POINTER DOUBLE-TAP')
+                break
+        }
+    })
 }
 
 const onRender = (scene) => {
     const deltaTimeInMillis = scene.getEngine().getDeltaTime()
 
-    const rpm = 10
-    const rate = (rpm / 60) * Math.PI * 2 * (deltaTimeInMillis / 1000)
+    const rpm = 60
+    const rate = (rpm / 60) * Math.PI * 0.5 * (deltaTimeInMillis / 1000)
     plan1.rotate(Axis.Y, rate, Space.LOCAL)
 }
 
 const SceneViewer = () => (
-    <StyledScene
-        antialias
-        // onPointerDown={onPointerDown}
-        onSceneReady={onSceneReady}
-        onRender={onRender}
-        id="my-canvas"
-    />
+    <StyledScene antialias onSceneReady={onSceneReady} onRender={onRender} id="my-canvas" />
 )
 
 export default SceneViewer
