@@ -1,18 +1,20 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { Progression, Chord, Note } from '@tonaljs/tonal'
-import { Transport } from 'tone'
+import { context, Transport } from 'tone'
 
 interface Mood {
     bpm: number
     keys: Array<string>
     chordName: string
+    setBpm: Function
+    toggleTransport: Function
 }
 
 const MoodContext = createContext<Partial<Mood>>({})
 
 const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
     const [chord, setChord] = useState<any>({})
-    const [bpm, setBpm] = useState<number>(120)
+    const [bpm, setBpm] = useState<number>(80)
 
     // const chords = Progression.fromRomanNumerals("C", ['Im', 'Vm', 'VIb', 'IIIb', 'IVm', 'Im', 'II', 'V']);
     // const chords = Progression.fromRomanNumerals('C', [  // Canon
@@ -37,7 +39,7 @@ const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
     //     'II7',
     // ])
     const chords = Progression.fromRomanNumerals('F', [
-        // FF
+        // Final Fantasy
         'I',
         'V',
         'IV',
@@ -56,6 +58,7 @@ const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
             if (i >= chords.length) i = 0
         }, '1n')
         Transport.start()
+
         return () => {
             Transport.stop()
         }
@@ -65,11 +68,16 @@ const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
         Transport.bpm.value = bpm
     }, [bpm])
 
+    const toggleTransport = useCallback(() => {
+        Transport.toggle()
+    }, [])
+
     const value = {
         bpm: bpm,
         keys: chord.notes,
         chordName: chord.name,
         setBpm: setBpm,
+        toggleTransport: toggleTransport,
     }
 
     return <MoodContext.Provider value={value}>{props.children}</MoodContext.Provider>

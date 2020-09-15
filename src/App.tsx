@@ -25,18 +25,17 @@ const App = () => {
 
     const handleStart = () => {
         setReady(true)
-        context.state !== 'running' && context.resume()
     }
 
     return (
         <AppStyle>
             {ready ? (
-                // <MoodProvider>
-                <SceneViewer />
+                <MoodProvider>
+                    <SceneViewer />
+                    <ChordDisplay />
+                </MoodProvider>
             ) : (
-                // <ChordDisplay />
-                // </MoodProvider>
-                <StartButton onClick={handleStart}>Start</StartButton>
+                <StartButton onClick={handleStart}>Click to start</StartButton>
             )}
         </AppStyle>
     )

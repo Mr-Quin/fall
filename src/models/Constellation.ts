@@ -3,6 +3,7 @@
  */
 
 import Star from './Star'
+import stars from './stars.json'
 import {
     Color3,
     Color4,
@@ -11,24 +12,36 @@ import {
     Texture,
     Vector3,
 } from '@babylonjs/core'
+import { randomFromArray } from '../utils/utils'
 
 interface Constellation {
-    stars: Star[]
+    stars: any[]
     lines: any[]
-    addStar(position: Vector3, diameter: number): void
+    addStar(position: Vector3, diameter: number, octave: number): void
 }
 
 class Constellation implements Constellation {
     private readonly _scene
+    private readonly con: any
 
     constructor(scene) {
         this._scene = scene
+        this.con = stars
         this.stars = []
         this.lines = []
+        // this.con.forEach((star) => {
+        //     const pos = new Vector3(star.x, star.z, star.y).normalize().scale(40)
+        //     const color = kToRGB(bvToK(star.ci))
+        //     new Star(Vector3.Zero(), pos, 0.5, Color3.White(), this._scene)
+        //         .setMaterial(this._createStarMaterial())
+        //         .setParticleSystem(this._createStarParticle(0.5))
+        //         .setAction(this._scene)
+        //         .setAnimation()
+        // })
     }
 
     private _createStarParticle = (diameter) => {
-        const capacity = 30
+        const capacity = 20
         const particleSystem = new ParticleSystem('starParticle', capacity, this._scene)
         // use mesh emitter
         particleSystem.createSphereEmitter(diameter)
@@ -43,7 +56,7 @@ class Constellation implements Constellation {
         particleSystem.colorDead = new Color4(0, 0, 0.2, 0.0)
         // size
         particleSystem.minSize = 0.1
-        particleSystem.maxSize = 0.5
+        particleSystem.maxSize = 0.4
         // lifetime
         particleSystem.minLifeTime = 0.3
         particleSystem.maxLifeTime = 1
@@ -56,27 +69,43 @@ class Constellation implements Constellation {
         // gravity
         particleSystem.gravity = new Vector3(0, 0, 0)
         // emission rate
-        particleSystem.emitRate = 30
+        particleSystem.emitRate = 20
         // stop after
-        particleSystem.targetStopDuration = 0.3
+        particleSystem.targetStopDuration = 0.2
         return particleSystem
     }
 
     private _createStarMaterial = () => {
         const material = new PBRMetallicRoughnessMaterial('material', this._scene)
-        material.emissiveColor = new Color3(0.2, 0.2, 0)
+        material.emissiveColor = new Color3(0.2, 0.2, 0.2)
         material.baseColor = Color3.White()
         material.roughness = 1
         return material
     }
 
-    addStar = (position: Vector3, diameter: number): void => {
-        const star = new Star(position, diameter, this._scene)
+    addStar = (position: Vector3, diameter: number, octave: number): void => {
+        const s = randomFromArray(this.con)
+        const starPos = new Vector3(s.x, s.z, s.y)
+        const star = new Star(position, starPos, diameter, Color3.White(), octave, this._scene)
         star.setMaterial(this._createStarMaterial())
             .setParticleSystem(this._createStarParticle(diameter))
             .setAction(this._scene)
             .setAnimation()
-        this.stars.push(star)
+        if (this.stars.length) {
+            const last = this.stars[this.stars.length - 1]
+            if (last.length > 3) {
+                this.stars.push([star])
+            } else {
+                if (Math.random() < 0.5) {
+                    this.stars.push([star])
+                } else {
+                    this.stars[this.stars.length - 1].push(star)
+                }
+            }
+        } else {
+            this.stars.push([star])
+        }
+        console.log(this.stars)
     }
 }
 

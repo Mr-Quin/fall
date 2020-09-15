@@ -24,6 +24,7 @@ import { randomFromArray } from '../utils/utils'
 interface Star {
     name: string
     mesh: Mesh
+    octave: number
     material: PBRMetallicRoughnessMaterial
     animation: Animation
     blinkAnimation: Animation
@@ -31,8 +32,7 @@ interface Star {
     synthAction: Action
     particleSystem: ParticleSystem | GPUParticleSystem
     rise(): void
-    shine(): void
-    triggerSynth(): void
+    blink(note?: string): void
     onRiseEnd(): void
     onBlinkEnd(): void
     dispose(): void
@@ -41,8 +41,19 @@ interface Star {
 class Star implements Star {
     private readonly _scene
     private readonly _synth: FMSynth
+    private readonly _groundPos: Vector3
+    private readonly _skyPos: Vector3
+    private readonly _toColor: Color3
+    private _ready: boolean
 
-    constructor(initPosition = Vector3.Zero(), diameter = 0.5, scene) {
+    constructor(
+        initPosition = Vector3.Zero(),
+        destPosition,
+        diameter = 0.5,
+        toColor,
+        octave = 4,
+        scene
+    ) {
         this._synth = new FMSynth({
             harmonicity: 8,
             modulationIndex: 2,
@@ -66,7 +77,12 @@ class Star implements Star {
             },
         }).toDestination()
         this._scene = scene
+        this._groundPos = initPosition
+        this._skyPos = destPosition
+        this._toColor = toColor
+        this._ready = false
         this.name = uuidv4()
+        this.octave = octave
         this.mesh = Mesh.CreateSphere(this.name, 32, diameter, scene)
         this.mesh.position = initPosition
         setTimeout(this.rise, 300)
@@ -80,6 +96,10 @@ class Star implements Star {
         return this.mesh.scaling
     }
 
+    get isReady(): boolean {
+        return this._ready
+    }
+
     get color(): Color3 {
         return this.material.emissiveColor
     }
@@ -89,7 +109,7 @@ class Star implements Star {
             ActionManager.NothingTrigger,
             this.material,
             'emissiveColor',
-            Color3.White(),
+            this._toColor,
             1000
         )
         this.synthAction = new ExecuteCodeAction(
@@ -101,8 +121,8 @@ class Star implements Star {
                     randomFromArray(['C3', 'C4', 'C5', 'E3', 'E4', 'E5', 'G3', 'G4', 'G5']),
                     '4n'
                 )
-                this.shine()
-                this.blink()
+                this.particleSystem.start()
+                this._scene.beginDirectAnimation(this.mesh, [this.blinkAnimation], 0, 15, false, 1)
             }
         )
         this.mesh.actionManager = new ActionManager(scene)
@@ -126,19 +146,13 @@ class Star implements Star {
         const moveKeys = [
             {
                 frame: 0,
-                value: this.position,
+                value: this._groundPos,
                 outTangent: new Vector3(0, 1, 0),
             },
             {
                 frame: 300,
                 inTangent: new Vector3(0, 0, 0),
-                value: new Vector3(
-                    -0.5 + Math.random(),
-                    Math.abs(Math.random()),
-                    -0.5 + Math.random()
-                )
-                    .normalize()
-                    .scale(Math.max(30, Math.random() * 50)),
+                value: this._skyPos,
             },
         ]
         this.animation.setKeys(moveKeys)
@@ -182,7 +196,7 @@ class Star implements Star {
         return this
     }
 
-    rise = () => {
+    rise = (): void => {
         this._scene.beginDirectAnimation(
             this.mesh,
             [this.animation],
@@ -194,31 +208,19 @@ class Star implements Star {
         )
     }
 
-    blink = () => {
-        this._scene.beginDirectAnimation(this.mesh, [this.blinkAnimation], 0, 15, false, 1)
-    }
-
-    shine = () => {
+    blink = (note = 'C4'): void => {
+        // this.synthAction.execute()
+        this._synth.triggerAttackRelease(note, '4n')
         this.particleSystem.start()
-        // particle system has a stop delay set
+        this._scene.beginDirectAnimation(this.mesh, [this.blinkAnimation], 0, 15, false, 1)
     }
 
     onRiseEnd = () => {
         this.colorAction.execute()
-        this.scheduleTransport()
+        this._ready = true
     }
 
     onBlinkEnd = () => {}
-
-    triggerSynth = () => {
-        this.synthAction.execute()
-    }
-
-    scheduleTransport = () => {
-        const schedule = Transport.scheduleRepeat((time) => {
-            this.triggerSynth()
-        }, '1n')
-    }
 
     dispose = () => {}
 }
