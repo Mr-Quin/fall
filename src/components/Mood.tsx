@@ -14,7 +14,6 @@ const MoodContext = createContext<Partial<Mood>>({})
 
 const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
     const [chord, setChord] = useState<any>({})
-    const [bpm, setBpm] = useState<number>(80)
 
     // const chords = Progression.fromRomanNumerals("C", ['Im', 'Vm', 'VIb', 'IIIb', 'IVm', 'Im', 'II', 'V']);
     // const chords = Progression.fromRomanNumerals('C', [  // Canon
@@ -58,26 +57,17 @@ const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
             if (i >= chords.length) i = 0
         }, '1n')
         Transport.start()
+        Transport.bpm.value = 80
 
         return () => {
             Transport.stop()
         }
     }, [])
 
-    useEffect(() => {
-        Transport.bpm.value = bpm
-    }, [bpm])
-
-    const toggleTransport = useCallback(() => {
-        Transport.toggle()
-    }, [])
-
     const value = {
-        bpm: bpm,
+        bpm: Transport.bpm.value,
         keys: chord.notes,
         chordName: chord.name,
-        setBpm: setBpm,
-        toggleTransport: toggleTransport,
     }
 
     return <MoodContext.Provider value={value}>{props.children}</MoodContext.Provider>

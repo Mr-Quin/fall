@@ -1,5 +1,5 @@
 /**
- * Star is a BabylonJS sphere mesh with material, actions, animations, and ToneJS synth
+ * Star is a BabylonJS sphere mesh with material, actions, animations
  */
 
 import {
@@ -9,30 +9,24 @@ import {
     Mesh,
     PBRMetallicRoughnessMaterial,
     Animation,
-    EasingFunction,
-    SineEase,
     Action,
     InterpolateValueAction,
-    ExecuteCodeAction,
     ParticleSystem,
     GPUParticleSystem,
 } from '@babylonjs/core'
 import { v4 as uuidv4 } from 'uuid'
-import { FMSynth, Transport } from 'tone'
-import { randomFromArray } from '../utils/utils'
 
 interface Star {
     name: string
     mesh: Mesh
     octave: number
     material: PBRMetallicRoughnessMaterial
-    animation: Animation
+    riseAnimation: Animation
     blinkAnimation: Animation
     colorAction: Action
-    synthAction: Action
     particleSystem: ParticleSystem | GPUParticleSystem
     rise(): void
-    blink(note?: string): void
+    blink(): void
     onRiseEnd(): void
     onBlinkEnd(): void
     dispose(): void
@@ -40,7 +34,6 @@ interface Star {
 
 class Star implements Star {
     private readonly _scene
-    private readonly _synth: FMSynth
     private readonly _groundPos: Vector3
     private readonly _skyPos: Vector3
     private readonly _toColor: Color3
@@ -54,28 +47,6 @@ class Star implements Star {
         octave = 4,
         scene
     ) {
-        this._synth = new FMSynth({
-            harmonicity: 8,
-            modulationIndex: 2,
-            oscillator: {
-                type: 'sine',
-            },
-            envelope: {
-                attack: 0.001,
-                decay: 2,
-                sustain: 0.1,
-                release: 2,
-            },
-            modulation: {
-                type: 'square',
-            },
-            modulationEnvelope: {
-                attack: 0.002,
-                decay: 0.2,
-                sustain: 0,
-                release: 0.2,
-            },
-        }).toDestination()
         this._scene = scene
         this._groundPos = initPosition
         this._skyPos = destPosition
@@ -85,6 +56,7 @@ class Star implements Star {
         this.octave = octave
         this.mesh = Mesh.CreateSphere(this.name, 32, diameter, scene)
         this.mesh.position = initPosition
+        this.mesh.animations = []
         setTimeout(this.rise, 300)
     }
 
@@ -104,7 +76,7 @@ class Star implements Star {
         return this.material.emissiveColor
     }
 
-    setAction = (scene): this => {
+    setAction = (): this => {
         this.colorAction = new InterpolateValueAction(
             ActionManager.NothingTrigger,
             this.material,
@@ -112,94 +84,40 @@ class Star implements Star {
             this._toColor,
             1000
         )
-        this.synthAction = new ExecuteCodeAction(
-            {
-                trigger: ActionManager.NothingTrigger,
-            },
-            () => {
-                this._synth.triggerAttackRelease(
-                    randomFromArray(['C3', 'C4', 'C5', 'E3', 'E4', 'E5', 'G3', 'G4', 'G5']),
-                    '4n'
-                )
-                this.particleSystem.start()
-                this._scene.beginDirectAnimation(this.mesh, [this.blinkAnimation], 0, 15, false, 1)
-            }
-        )
-        this.mesh.actionManager = new ActionManager(scene)
+        this.mesh.actionManager = new ActionManager(this._scene)
         this.mesh.actionManager.registerAction(this.colorAction)
-        this.mesh.actionManager.registerAction(this.synthAction)
         return this
     }
 
-    setAnimation = () => {
-        this.mesh.animations = []
-        this.animation = new Animation(
-            `${this.name}-move`,
-            'position',
-            30,
-            Animation.ANIMATIONTYPE_VECTOR3,
-            Animation.ANIMATIONLOOPMODE_CYCLE
-        )
-        const easingFunction = new SineEase()
-        easingFunction.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT)
-        this.animation.setEasingFunction(easingFunction)
-        const moveKeys = [
-            {
-                frame: 0,
-                value: this._groundPos,
-                outTangent: new Vector3(0, 1, 0),
-            },
-            {
-                frame: 300,
-                inTangent: new Vector3(0, 0, 0),
-                value: this._skyPos,
-            },
-        ]
-        this.animation.setKeys(moveKeys)
-        this.mesh.animations.push(this.animation)
-
-        this.blinkAnimation = new Animation(
-            `${this.name}-blink`,
-            'scaling',
-            30,
-            Animation.ANIMATIONTYPE_VECTOR3,
-            Animation.ANIMATIONLOOPMODE_CYCLE
-        )
-        const blinkKeys = [
-            {
-                frame: 0,
-                value: this.scaling,
-            },
-            {
-                frame: 5,
-                value: new Vector3(1.5, 1.5, 1.5),
-            },
-            {
-                frame: 10,
-                value: this.scaling,
-            },
-        ]
-        this.blinkAnimation.setKeys(blinkKeys)
-        this.mesh.animations.push(this.blinkAnimation)
+    attachRiseAnimation = (animation: Animation) => {
+        this.riseAnimation = animation
+        this.mesh.animations.push(animation)
         return this
     }
 
-    setParticleSystem = (ps: ParticleSystem) => {
+    attachBlinkAnimation = (animation: Animation) => {
+        this.blinkAnimation = animation
+        this.mesh.animations.push(animation)
+        return this
+    }
+
+    attachParticleSystem = (ps: ParticleSystem) => {
         ps.emitter = this.mesh
         this.particleSystem = ps
         return this
     }
 
-    setMaterial = (mat: PBRMetallicRoughnessMaterial) => {
+    attachMaterial = (mat: PBRMetallicRoughnessMaterial) => {
         this.mesh.material = mat
         this.material = mat
+        this.setAction()
         return this
     }
 
     rise = (): void => {
         this._scene.beginDirectAnimation(
             this.mesh,
-            [this.animation],
+            [this.riseAnimation],
             0,
             300,
             false,
@@ -208,9 +126,7 @@ class Star implements Star {
         )
     }
 
-    blink = (note = 'C4'): void => {
-        // this.synthAction.execute()
-        this._synth.triggerAttackRelease(note, '4n')
+    blink = (): void => {
         this.particleSystem.start()
         this._scene.beginDirectAnimation(this.mesh, [this.blinkAnimation], 0, 15, false, 1)
     }

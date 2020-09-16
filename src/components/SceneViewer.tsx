@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { Color3, GlowLayer, PointerEventTypes } from '@babylonjs/core'
 import SceneComponent from './SceneComponent'
 import Environment from '../models/Environment'
 import { useMood } from './Mood'
 import { Transport } from 'tone'
+import Space from '../models/Space'
 
 const StyledScene = styled(SceneComponent)`
     width: 100vw;
@@ -13,54 +14,60 @@ const StyledScene = styled(SceneComponent)`
     margin: 0;
 `
 
+const StyledStat = styled.div`
+    color: white;
+    position: absolute;
+`
+
 const SceneViewer = ({ ...props }) => {
     const mood = useMood()
 
-    const environment = useRef<any>()
+    const environmentRef = useRef<any>()
+    const spaceRef = useRef<any>()
+    const fpsRef = useRef<any>()
 
     useEffect(() => {
-        environment.current.keys = mood.keys
+        spaceRef.current.keys = mood.keys
+        console.log(spaceRef)
     }, [mood])
+
+    useEffect(() => {
+        environmentRef.current.createCamera().createLight().createGround().createEffects()
+        environmentRef.current.sceneColor = Color3.Black()
+        environmentRef.current.enableDebugMetrics()
+    }, [environmentRef])
 
     const onSceneReady = useCallback((scene) => {
         const canvas = scene.getEngine().getRenderingCanvas()
-        environment.current = new Environment(scene, canvas)
-        environment.current.createCamera().createLight().createGround()
-        environment.current.sceneColor = Color3.Black()
-
-        const glow = new GlowLayer('glow', scene, { mainTextureSamples: 2 })
-
-        scene.onPointerObservable.add((pointerInfo) => {
-            const { type, event } = pointerInfo
-            switch (type) {
-                case PointerEventTypes.POINTERDOWN:
-                    console.log('POINTER DOWN')
-                    break
-                case PointerEventTypes.POINTERUP:
-                    console.log('POINTER UP')
-                    break
-                case PointerEventTypes.POINTERMOVE:
-                    console.log('POINTER MOVE')
-                    break
-                case PointerEventTypes.POINTERWHEEL:
-                    console.log('POINTER WHEEL')
-                    break
-                case PointerEventTypes.POINTERPICK:
-                    console.log('POINTER PICK')
-                    break
-                case PointerEventTypes.POINTERTAP:
-                    console.log('POINTER TAP')
-                    break
-                case PointerEventTypes.POINTERDOUBLETAP:
-                    console.log('POINTER DOUBLE-TAP')
-                    break
-            }
-        })
+        environmentRef.current = new Environment(scene, canvas)
+        spaceRef.current = new Space(scene)
+        spaceRef.current.addConstellation([
+            [4, 5],
+            [2, 5],
+            [2, 3, 5],
+            [],
+            [2, 6, 4],
+            [2, 6, 4],
+            [],
+            [2, 3, 5],
+        ])
+        setTimeout(() => {
+            spaceRef.current.startTransport()
+        }, 1000)
     }, [])
 
-    const onRender = useCallback((scene) => {}, [])
+    const onRender = useCallback((scene) => {
+        fpsRef.current.innerHTML = `FPS: ${scene.getEngine().getFps().toFixed()}`
+    }, [])
 
-    return <StyledScene antialias onSceneReady={onSceneReady} onRender={onRender} id="my-canvas" />
+    console.log('canvas render')
+
+    return (
+        <>
+            <StyledStat ref={fpsRef} />
+            <StyledScene antialias onSceneReady={onSceneReady} onRender={onRender} id="my-canvas" />
+        </>
+    )
 }
 
 export default SceneViewer

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Point } from '../Types'
+import { Point } from '../models/Types'
 
 interface useMousePositionFunc {
     (): Point

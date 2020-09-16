@@ -1,4 +1,4 @@
-import { Point } from '../Types'
+import { Point } from '../models/Types'
 
 export const distPoint = (pt1: Point, pt2: Point) => {
     const a = Math.pow(pt1.x - pt2.x, 2)
