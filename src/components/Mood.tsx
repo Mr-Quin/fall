@@ -57,7 +57,7 @@ const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
             if (i >= chords.length) i = 0
         }, '1n')
         Transport.start()
-        Transport.bpm.value = 80
+        Transport.bpm.value = 90
 
         return () => {
             Transport.stop()

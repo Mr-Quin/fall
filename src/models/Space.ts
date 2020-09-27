@@ -4,7 +4,6 @@
 
 import Constellation from './Constellation'
 import { context, Transport } from 'tone'
-import { randomFromArray } from '../utils/utils'
 
 interface Space {
     keys: string[]
@@ -27,18 +26,14 @@ class Space implements Space {
     startTransport = () => {
         let index = 0
         Transport.scheduleRepeat(() => {
-            console.log(this.keys)
-            if (!this.keys.length) return
+            if (!this.keys || !this.keys.length) return
             if (index > 7) index = 0
+            console.log(index)
             this._constellations.forEach((constellation) => {
+                if (!constellation.ready) return
                 const asterism = constellation.asterisms[index]
                 if (asterism.hasStars) {
-                    asterism.stars.forEach((star) => {
-                        const key = `${randomFromArray(this.keys)}${star.octave}`
-                        console.log(key)
-                        star.blink()
-                        constellation.instrument.play(key).stop(context.currentTime + 1)
-                    })
+                    asterism.blink(constellation.instrument, this.keys, context.currentTime)
                 }
             })
             index += 1

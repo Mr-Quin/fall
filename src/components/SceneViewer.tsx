@@ -28,7 +28,7 @@ const SceneViewer = ({ ...props }) => {
 
     useEffect(() => {
         spaceRef.current.keys = mood.keys
-        console.log(spaceRef)
+        console.log(mood.keys)
     }, [mood])
 
     useEffect(() => {
@@ -42,18 +42,17 @@ const SceneViewer = ({ ...props }) => {
         environmentRef.current = new Environment(scene, canvas)
         spaceRef.current = new Space(scene)
         spaceRef.current.addConstellation([
-            [4, 5],
+            // parse a 2D array to generate stars
             [2, 5],
-            [2, 3, 5],
+            [2, 6],
             [],
-            [2, 6, 4],
-            [2, 6, 4],
+            [2, 7, 4],
+            [2, 6, 5],
+            [4, 5, 6],
             [],
             [2, 3, 5],
         ])
-        setTimeout(() => {
-            spaceRef.current.startTransport()
-        }, 1000)
+        spaceRef.current.startTransport()
     }, [])
 
     const onRender = useCallback((scene) => {

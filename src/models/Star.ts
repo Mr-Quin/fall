@@ -38,6 +38,7 @@ class Star implements Star {
     private readonly _skyPos: Vector3
     private readonly _toColor: Color3
     private _ready: boolean
+    private _onReady: any
 
     constructor(
         initPosition = Vector3.Zero(),
@@ -45,13 +46,15 @@ class Star implements Star {
         diameter = 0.5,
         toColor,
         octave = 4,
-        scene
+        scene,
+        onReady
     ) {
         this._scene = scene
         this._groundPos = initPosition
         this._skyPos = destPosition
         this._toColor = toColor
         this._ready = false
+        this._onReady = onReady
         this.name = uuidv4()
         this.octave = octave
         this.mesh = Mesh.CreateSphere(this.name, 32, diameter, scene)
@@ -133,6 +136,7 @@ class Star implements Star {
 
     onRiseEnd = () => {
         this.colorAction.execute()
+        this._onReady(this.position)
         this._ready = true
     }
 
