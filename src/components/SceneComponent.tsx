@@ -1,8 +1,20 @@
-import { Engine, Scene } from '@babylonjs/core'
-import React, { useEffect, useRef, useState } from 'react'
+/*
+    Taken from the BabylonJS React snippet. Added static typing.
+ */
+import { Engine, EngineOptions, Scene, SceneOptions } from '@babylonjs/core'
+import React, { CanvasHTMLAttributes, DetailedHTMLProps, useEffect, useRef, useState } from 'react'
 
-const SceneComponent = (props) => {
-    const reactCanvas = useRef(null)
+interface SceneProps
+    extends DetailedHTMLProps<CanvasHTMLAttributes<HTMLCanvasElement>, HTMLCanvasElement> {
+    antialias?: boolean
+    engineOptions?: EngineOptions
+    sceneOptions?: SceneOptions
+    adaptToDeviceRatio?: boolean
+    onRender?: (scene: Scene) => void
+    onSceneReady?: (scene: Scene) => void
+}
+
+const SceneComponent = (props: SceneProps) => {
     const {
         antialias,
         engineOptions,
@@ -13,8 +25,10 @@ const SceneComponent = (props) => {
         ...rest
     } = props
 
-    const [loaded, setLoaded] = useState(false)
-    const [scene, setScene] = useState<any>(null)
+    const reactCanvas = useRef<any>()
+
+    const [loaded, setLoaded] = useState<boolean>(false)
+    const [scene, setScene] = useState<Scene>()
 
     useEffect(() => {
         if (window) {
@@ -44,22 +58,20 @@ const SceneComponent = (props) => {
             const scene = new Scene(engine, sceneOptions)
             setScene(scene)
             if (scene.isReady()) {
-                onSceneReady(scene)
+                onSceneReady!(scene)
             } else {
-                scene.onReadyObservable.addOnce((scene) => onSceneReady(scene))
+                scene.onReadyObservable.addOnce((scene) => onSceneReady!(scene))
             }
 
             engine.runRenderLoop(() => {
-                if (typeof onRender === 'function') {
-                    onRender(scene)
-                }
+                onRender!(scene)
                 scene.render()
             })
         }
 
         return () => {
             if (scene !== null) {
-                scene.dispose()
+                scene!.dispose()
             }
         }
     }, [reactCanvas])
