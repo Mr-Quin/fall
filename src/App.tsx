@@ -30,10 +30,7 @@ const App = () => {
     return (
         <AppStyle>
             {ready ? (
-                <MoodProvider>
-                    <SceneViewer />
-                    <ChordDisplay />
-                </MoodProvider>
+                <SceneViewer />
             ) : (
                 <StartButton onClick={handleStart}>Click to start</StartButton>
             )}
