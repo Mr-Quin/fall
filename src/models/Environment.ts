@@ -10,15 +10,13 @@ import {
     Light,
     Mesh,
     MeshBuilder,
-    StandardMaterial,
     Vector3,
     EngineInstrumentation,
     GlowLayer,
     Scene,
 } from '@babylonjs/core'
+import { GridMaterial } from '@babylonjs/materials'
 import { AdvancedDynamicTexture, Control, StackPanel, TextBlock } from '@babylonjs/gui'
-import { context, Transport } from 'tone'
-import Space from './Space'
 
 interface Environment {
     new (scene: Scene, canvas: HTMLCanvasElement): Environment
@@ -48,13 +46,11 @@ class Environment implements Environment {
         // optimization
         this._scene.autoClear = false // Color buffer
         this._scene.autoClearDepthAndStencil = false // Depth and stencil, obviously
-        this._onFinishLoading()
+        this._ready = true
+        this._onLoad()
     }
 
-    private _onFinishLoading = () => {
-        this._ready = true
-        context.resume()
-    }
+    private _onLoad = () => {}
 
     get ready() {
         return this._ready
@@ -74,39 +70,40 @@ class Environment implements Environment {
         stackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP
         stackPanel.isVertical = true
         advancedTexture.addControl(stackPanel)
-        const applyTextStyles = (textBlocks) => {
-            textBlocks.forEach((textBlock) => {
+        const frameTime = new TextBlock()
+        const averageFrameTime = new TextBlock()
+        const shaderTime = new TextBlock()
+        const shaderCount = new TextBlock()
+        const fps = new TextBlock()
+
+        const applyTextStyles = (textBlocks) =>
+            void textBlocks.forEach((textBlock) => {
                 textBlock.text = ''
                 textBlock.color = 'white'
                 textBlock.fontSize = 16
                 textBlock.height = '30px'
                 stackPanel.addControl(textBlock)
             })
-        }
-        const frameTime = new TextBlock()
-        const averageFrameTime = new TextBlock()
-        const shaderTime = new TextBlock()
-        const shaderCount = new TextBlock()
-        applyTextStyles([frameTime, averageFrameTime, shaderTime, shaderCount])
+
+        applyTextStyles([frameTime, averageFrameTime, shaderTime, shaderCount, fps])
 
         const instrumentation = new EngineInstrumentation(this._scene.getEngine())
+
         instrumentation.captureGPUFrameTime = true
         instrumentation.captureShaderCompilationTime = true
 
         this._scene.registerBeforeRender(() => {
-            frameTime.text = `current frame time (GPU): ${(
+            frameTime.text = `Current frame time (GPU): ${(
                 instrumentation.gpuFrameTimeCounter.current * 0.000001
             ).toFixed(2)} ms`
-            averageFrameTime.text =
-                'average frame time (GPU): ' +
-                (instrumentation.gpuFrameTimeCounter.average * 0.000001).toFixed(2) +
-                'ms'
-            shaderTime.text =
-                'total shader compilation time: ' +
-                instrumentation.shaderCompilationTimeCounter.total.toFixed(2) +
-                'ms'
-            shaderCount.text =
-                'compiler shaders count: ' + instrumentation.shaderCompilationTimeCounter.count
+            averageFrameTime.text = `Average frame time (GPU): ${(
+                instrumentation.gpuFrameTimeCounter.average * 0.000001
+            ).toFixed(2)} ms`
+            shaderTime.text = `Total shader compilation time: ${instrumentation.shaderCompilationTimeCounter.total.toFixed(
+                2
+            )} ms`
+            shaderCount.text = `Compiler shaders count: ${instrumentation.shaderCompilationTimeCounter.count}`
+            fps.text = `FPS: ${this._scene.getEngine().getFps().toFixed()}`
         })
     }
 
@@ -128,35 +125,16 @@ class Environment implements Environment {
     }
 
     createGround = () => {
-        const ground = MeshBuilder.CreateGround('ground', { width: 8, height: 8 }, this._scene)
-        const groundMat = new StandardMaterial('mat', this._scene)
-        groundMat.wireframe = true
+        const ground = MeshBuilder.CreateGround('ground', { width: 50, height: 50 }, this._scene)
+        const groundMat = new GridMaterial('mat', this._scene)
+        groundMat.majorUnitFrequency = 5
+        groundMat.minorUnitVisibility = 0.45
+        groundMat.gridRatio = 1
+        groundMat.opacity = 0.6
+        groundMat.mainColor = new Color3(1, 1, 1)
+        groundMat.lineColor = new Color3(1, 1, 1)
+        groundMat.backFaceCulling = false
         ground.material = groundMat
-
-        // for (let i = 1; i < 9; i++) {
-        //     const points: any[] = []
-        //     let angle = 0
-        //     for (let j = 0; j < 32; j++) {
-        //         angle += (Math.PI * 2) / 31
-        //         points.push(new Vector3((i / 2) * Math.cos(angle), 0, (i / 2) * Math.sin(angle)))
-        //     }
-        //     Mesh.CreateLines('concentric', points, this._scene, true)
-        // }
-        // ground.actionManager = new ActionManager(this._scene)
-        // ground.actionManager.registerAction(
-        //     new ExecuteCodeAction(ActionManager.OnLeftPickTrigger, (e) => {
-        //         const { pickedPoint } = this._scene.pick(e.pointerX, e.pointerY, (mesh) => {
-        //             return mesh === ground
-        //         })
-        //
-        //         pickedPoint &&
-        //             this._constellation.addStar(
-        //                 pickedPoint,
-        //                 randomBetween(0.1, 0.4),
-        //                 randomBetween(2, 7) << 0
-        //             )
-        //     })
-        // )
         this.ground = ground
         return this
     }
