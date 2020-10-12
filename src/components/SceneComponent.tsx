@@ -10,8 +10,8 @@ interface SceneProps
     engineOptions?: EngineOptions
     sceneOptions?: SceneOptions
     adaptToDeviceRatio?: boolean
-    onRender?: (scene: Scene) => void
     onSceneReady?: (scene: Scene) => void
+    onRender?: (scene: Scene) => void
 }
 
 const SceneComponent = (props: SceneProps) => {
