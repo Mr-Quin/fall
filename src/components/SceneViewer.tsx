@@ -1,72 +1,68 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import styled from 'styled-components'
-import { Color3, GlowLayer, PointerEventTypes } from '@babylonjs/core'
+import * as BABYLON from '@babylonjs/core'
+import '@babylonjs/core/Loading/loadingScreen'
+import '@babylonjs/loaders/glTF'
 import SceneComponent from './SceneComponent'
 import Environment from '../models/Environment'
-import { useMood } from './Mood'
-import { Transport } from 'tone'
-import Space from '../models/Space'
 
-const StyledScene = styled(SceneComponent)`
+// star is loaded by file-loader as configured in config-overrides.js
+import star from '../assets/star.gltf'
+
+const BabylonScene = styled(SceneComponent)`
     width: 100vw;
     height: 100vh;
     padding: 0;
     margin: 0;
 `
 
-const StyledStat = styled.div`
-    color: white;
-    position: absolute;
-`
-
 const SceneViewer = ({ ...props }) => {
-    const mood = useMood()
-
     const environmentRef = useRef<any>()
-    const spaceRef = useRef<any>()
-    const fpsRef = useRef<any>()
-
-    useEffect(() => {
-        spaceRef.current.keys = mood.keys
-        console.log(mood.keys)
-    }, [mood])
 
     useEffect(() => {
         environmentRef.current.createCamera().createLight().createGround().createEffects()
-        environmentRef.current.sceneColor = Color3.Black()
+        environmentRef.current.sceneColor = BABYLON.Color3.Black()
         environmentRef.current.enableDebugMetrics()
     }, [environmentRef])
 
-    const onSceneReady = useCallback((scene) => {
+    const onSceneReady = useCallback(async (scene) => {
         const canvas = scene.getEngine().getRenderingCanvas()
         environmentRef.current = new Environment(scene, canvas)
-        spaceRef.current = new Space(scene)
-        spaceRef.current.addConstellation([
-            // parse a 2D array to generate stars
-            [2, 5],
-            [2, 6],
-            [],
-            [2, 7, 4],
-            [2, 6, 5],
-            [4, 5, 6],
-            [],
-            [2, 3, 5],
-        ])
-        spaceRef.current.startTransport()
+        scene.enablePhysics()
+        console.log(star.substring(1))
+
+        const importResult = await BABYLON.SceneLoader.ImportMeshAsync(
+            '',
+            '',
+            star.substring(1), //remove the starting slash in file name
+            scene,
+            undefined,
+            '.gltf'
+        )
+
+        const starMesh = importResult.meshes[0]
+        // importResult.meshes[0].scaling.scaleInPlace(10)
+        starMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
+            starMesh,
+            BABYLON.PhysicsImpostor.SphereImpostor,
+            { mass: 1, restitution: 0.9 },
+            scene
+        )
+
+        // const sphere = BABYLON.Mesh.CreateSphere('sphere1', 16, 2, scene)
+        // sphere.physicsImpostor = new BABYLON.PhysicsImpostor(
+        //     sphere,
+        //     BABYLON.PhysicsImpostor.SphereImpostor,
+        //     { mass: 1, restitution: 0.9 },
+        //     scene
+        // )
     }, [])
 
-    const onRender = useCallback((scene) => {
-        fpsRef.current.innerHTML = `FPS: ${scene.getEngine().getFps().toFixed()}`
-    }, [])
+    const onRender = useCallback((scene) => void 0, [])
 
     console.log('canvas render')
 
-    return (
-        <>
-            <StyledStat ref={fpsRef} />
-            <StyledScene antialias onSceneReady={onSceneReady} onRender={onRender} id="my-canvas" />
-        </>
-    )
+    return <BabylonScene antialias onSceneReady={onSceneReady} onRender={onRender} />
 }
 
 export default SceneViewer
