@@ -1,24 +1,42 @@
 import create from 'zustand'
+import * as BABYLON from '@babylonjs/core'
+import { Nullable } from '@babylonjs/core'
 
 type StoreState = {
-    bears: number
-    ready: boolean
+    statics: {
+        scene: Nullable<BABYLON.Scene>
+        canvas: Nullable<HTMLCanvasElement>
+        camera: Nullable<BABYLON.Camera>
+    }
+    mutations: {
+        ready: boolean
+    }
     actions: {
-        setReady: (promises: Promise<any>[]) => void
+        init: (
+            scene: Nullable<BABYLON.Scene>,
+            canvas: Nullable<HTMLCanvasElement>,
+            camera: Nullable<BABYLON.Camera>
+        ) => void
+        setReady: () => void
+        fall: () => void
     }
 }
 
 const useStore = create<StoreState>((set, get) => ({
-    bears: 0,
-    ready: false,
+    statics: {
+        scene: null,
+        canvas: null,
+        camera: null,
+    },
+    mutations: {
+        ready: false,
+    },
     actions: {
-        setReady: (promises) => {
-            Promise.all(promises)
-                .then(() => set((state) => ({ ready: true })))
-                .catch((err) => console.error(err))
+        init: (scene, canvas, camera) => {
+            set((state) => ({ statics: { scene: scene, canvas: canvas, camera: camera } }))
         },
-        increasePopulation: () => set((state) => ({ bears: state.bears + 1 })),
-        removeAllBears: () => set({ bears: 0 }),
+        setReady: () => void (get().mutations.ready = true),
+        fall: () => {},
     },
 }))
 
