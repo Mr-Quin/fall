@@ -17,7 +17,7 @@ export const randomFromArray = (arr: any[]): any => {
     return arr[(Math.random() * arr.length) << 0]
 }
 
-export const randomBetween = (min: number, max: number): number => {
+export const randomRange = (min: number, max: number): number => {
     return Math.random() * (max - min) + min
 }
 
