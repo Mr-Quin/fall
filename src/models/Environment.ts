@@ -14,16 +14,21 @@ import {
     EngineInstrumentation,
     GlowLayer,
     Scene,
+    PhysicsImpostor,
+    AmmoJSPlugin,
+    FollowCamera,
+    AbstractMesh,
+    ArcFollowCamera,
 } from '@babylonjs/core'
+import '@babylonjs/inspector'
 import { GridMaterial } from '@babylonjs/materials'
 import { AdvancedDynamicTexture, Control, StackPanel, TextBlock } from '@babylonjs/gui'
 
 interface Environment {
     new (scene: Scene, canvas: HTMLCanvasElement): Environment
-    camera: Camera
+    camera: ArcRotateCamera
     light: Light
     ground: Mesh
-    enableDebugMetrics(): void
     createCamera(): this
     createLight(): this
     createGround(): this
@@ -47,6 +52,7 @@ class Environment implements Environment {
         this._scene.autoClear = false // Color buffer
         this._scene.autoClearDepthAndStencil = false // Depth and stencil, obviously
         this._ready = true
+        this._scene.enablePhysics(new Vector3(0, -9.8, 0), new AmmoJSPlugin())
         this._onLoad()
     }
 
@@ -64,55 +70,21 @@ class Environment implements Environment {
         this._keys = keys
     }
 
-    enableDebugMetrics = () => {
-        const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI('UI')
-        const stackPanel = new StackPanel()
-        stackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP
-        stackPanel.isVertical = true
-        advancedTexture.addControl(stackPanel)
-        const frameTime = new TextBlock()
-        const averageFrameTime = new TextBlock()
-        const shaderTime = new TextBlock()
-        const shaderCount = new TextBlock()
-        const fps = new TextBlock()
-
-        const applyTextStyles = (textBlocks) =>
-            void textBlocks.forEach((textBlock) => {
-                textBlock.text = ''
-                textBlock.color = 'white'
-                textBlock.fontSize = 16
-                textBlock.height = '30px'
-                stackPanel.addControl(textBlock)
-            })
-
-        applyTextStyles([frameTime, averageFrameTime, shaderTime, shaderCount, fps])
-
-        const instrumentation = new EngineInstrumentation(this._scene.getEngine())
-
-        instrumentation.captureGPUFrameTime = true
-        instrumentation.captureShaderCompilationTime = true
-
-        this._scene.registerBeforeRender(() => {
-            frameTime.text = `Current frame time (GPU): ${(
-                instrumentation.gpuFrameTimeCounter.current * 0.000001
-            ).toFixed(2)} ms`
-            averageFrameTime.text = `Average frame time (GPU): ${(
-                instrumentation.gpuFrameTimeCounter.average * 0.000001
-            ).toFixed(2)} ms`
-            shaderTime.text = `Total shader compilation time: ${instrumentation.shaderCompilationTimeCounter.total.toFixed(
-                2
-            )} ms`
-            shaderCount.text = `Compiler shaders count: ${instrumentation.shaderCompilationTimeCounter.count}`
-            fps.text = `FPS: ${this._scene.getEngine().getFps().toFixed()}`
-        })
-    }
-
     createCamera = () => {
-        const camera = new ArcRotateCamera('Camera', 0, 0, 5, new Vector3(0, 0, 0), this._scene)
+        // const camera = new ArcRotateCamera('Camera', 0, 0, 5, new Vector3(0, 0, 0), this._scene)
+        const camera = new ArcRotateCamera(
+            'Camera',
+            1.65,
+            3.14,
+            30,
+            new Vector3(0, 0, 0),
+            this._scene
+        )
         camera.setPosition(new Vector3(5, 10, 20))
-        camera.setTarget(Vector3.Zero())
+        // camera.setTarget(Vector3.Zero())
+        // camera.lockedTarget = target
         camera.attachControl(this._canvas, true)
-        camera.lowerRadiusLimit = 5
+        // camera.lowerRadiusLimit = 5
         this.camera = camera
         return this
     }
@@ -120,13 +92,27 @@ class Environment implements Environment {
     createLight = () => {
         const light = new HemisphericLight('light', new Vector3(0, 1, 0), this._scene)
         light.intensity = 0.5
+        light.range = 1
+        light.diffuse = new Color3(0.05, 0, 0.2)
         this.light = light
         return this
     }
 
     createGround = () => {
-        const ground = MeshBuilder.CreateGround('ground', { width: 50, height: 50 }, this._scene)
-        const groundMat = new GridMaterial('mat', this._scene)
+        const ground = MeshBuilder.CreateGround(
+            'grid-ground',
+            { width: 50, height: 50 },
+            this._scene
+        )
+        // ground.rotation.z = 0.3
+        ground.physicsImpostor = new PhysicsImpostor(
+            ground,
+            PhysicsImpostor.BoxImpostor,
+            { mass: 0, restitution: 0.9 },
+            this._scene
+        )
+        const groundMat = new GridMaterial('grid-material', this._scene)
+
         groundMat.majorUnitFrequency = 5
         groundMat.minorUnitVisibility = 0.45
         groundMat.gridRatio = 1
@@ -134,14 +120,14 @@ class Environment implements Environment {
         groundMat.mainColor = new Color3(1, 1, 1)
         groundMat.lineColor = new Color3(1, 1, 1)
         groundMat.backFaceCulling = false
-        ground.material = groundMat
+        // ground.material = groundMat
         this.ground = ground
         return this
     }
 
     createEffects = () => {
         const glow = new GlowLayer('glow', this._scene, { mainTextureSamples: 2 })
-        return this
+        return glow
     }
 }
 
