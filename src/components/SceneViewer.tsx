@@ -68,8 +68,11 @@ const SceneViewer = ({ ...props }) => {
         environment.createLight().createGround().createEffects()
         scene.clearColor = BABYLON.Color3.Black()
 
-        enableDebugMetrics()
-        toggleOverlay()
+        // debugging
+        if (process.env.NODE_ENV === 'development') {
+            enableDebugMetrics()
+            // toggleOverlay()
+        }
 
         // camera
         camera.attachControl(canvas, true)
