@@ -6,6 +6,7 @@ import { MoodProvider } from './components/Mood'
 import ChordDisplay from './components/ChordDisplay'
 import SceneViewer from './components/SceneViewer'
 import useStore from './stores/store'
+import Footer from './components/Footer'
 
 const AppStyle = styled.div`
     width: 100vw;
@@ -22,6 +23,7 @@ const App = () => {
         <AppStyle>
             <Fall ready={ready} />
             <SceneViewer />
+            {process.env.NODE_ENV === 'development' ? <Footer>Development</Footer> : null}
         </AppStyle>
     )
 }
