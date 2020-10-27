@@ -1,17 +1,17 @@
 /*
     Taken from the BabylonJS React snippet. Added static typing.
  */
-import { Engine, EngineOptions, Scene, SceneOptions } from '@babylonjs/core'
+import * as BABYLON from '@babylonjs/core'
 import React, { CanvasHTMLAttributes, DetailedHTMLProps, useEffect, useRef, useState } from 'react'
 
 interface SceneProps
     extends DetailedHTMLProps<CanvasHTMLAttributes<HTMLCanvasElement>, HTMLCanvasElement> {
     antialias?: boolean
-    engineOptions?: EngineOptions
-    sceneOptions?: SceneOptions
+    engineOptions?: BABYLON.EngineOptions
+    sceneOptions?: BABYLON.SceneOptions
     adaptToDeviceRatio?: boolean
-    onSceneReady?: (scene: Scene) => void
-    onRender?: (scene: Scene) => void
+    onSceneReady?: (scene: BABYLON.Scene) => void
+    onRender?: (scene: BABYLON.Scene) => void
 }
 
 const SceneComponent = (props: SceneProps) => {
@@ -28,7 +28,7 @@ const SceneComponent = (props: SceneProps) => {
     const reactCanvas = useRef<any>()
 
     const [loaded, setLoaded] = useState<boolean>(false)
-    const [scene, setScene] = useState<Scene>()
+    const [scene, setScene] = useState<BABYLON.Scene>()
 
     useEffect(() => {
         if (window) {
@@ -49,13 +49,13 @@ const SceneComponent = (props: SceneProps) => {
     useEffect(() => {
         if (!loaded) {
             setLoaded(true)
-            const engine = new Engine(
+            const engine = new BABYLON.Engine(
                 reactCanvas.current,
                 antialias,
                 engineOptions,
                 adaptToDeviceRatio
             )
-            const scene = new Scene(engine, sceneOptions)
+            const scene = new BABYLON.Scene(engine, sceneOptions)
             setScene(scene)
             if (scene.isReady()) {
                 onSceneReady!(scene)
