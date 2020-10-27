@@ -1,39 +1,27 @@
-import React, { useState } from 'react'
+import React from 'react'
 import styled from 'styled-components'
+import Fall from './components/Fall'
 import { context } from 'tone'
 import { MoodProvider } from './components/Mood'
 import ChordDisplay from './components/ChordDisplay'
 import SceneViewer from './components/SceneViewer'
+import useStore from './stores/store'
 
 const AppStyle = styled.div`
     width: 100vw;
     height: 100vh;
     padding: 0;
     margin: 0;
-    background: radial-gradient(circle, #123, #100);]
-`
-
-const StartButton = styled.button`
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    background: #0b033a;
 `
 
 const App = () => {
-    const [ready, setReady] = useState(false)
-
-    const handleStart = () => {
-        setReady(true)
-    }
+    const ready = useStore((state) => state.mutations.ready)
 
     return (
         <AppStyle>
-            {ready ? (
-                <SceneViewer />
-            ) : (
-                <StartButton onClick={handleStart}>Click to start</StartButton>
-            )}
+            <Fall ready={ready} />
+            <SceneViewer />
         </AppStyle>
     )
 }
