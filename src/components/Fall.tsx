@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import useStore from '../stores/store'
+import useToggle from '../hooks/useToggle'
 
 const FallButton = styled.button`
     position: absolute;
@@ -15,14 +16,25 @@ const FallButton = styled.button`
     cursor: pointer;
     font-family: 'Montserrat', sans-serif;
     font-size: 8em;
-    opacity: ${(props) => (props.ready ? 1 : 0)};
+    user-select: none;
+    opacity: ${(props) =>
+        props.ready ^ props.fallen
+            ? 1
+            : 0}; // xor of ready and fallen. There is probably a better solution
     transition: all 2s ease-in-out;
 `
 
 const Fall = (props) => {
     const fall = useStore((state) => state.actions.fall)
+    const [fallen, toggleFallen] = useToggle(false)
+
+    const handleClick = useCallback(() => {
+        fall()
+        toggleFallen()
+    }, [fall, toggleFallen])
+
     return (
-        <FallButton {...props} onClick={fall}>
+        <FallButton {...props} fallen={fallen} onClick={handleClick}>
             FALL
         </FallButton>
     )
