@@ -10,8 +10,8 @@ interface SceneProps
     engineOptions?: BABYLON.EngineOptions
     sceneOptions?: BABYLON.SceneOptions
     adaptToDeviceRatio?: boolean
-    onSceneReady?: (scene: BABYLON.Scene) => void
-    onRender?: (scene: BABYLON.Scene) => void
+    onSceneReady: (scene: BABYLON.Scene) => void
+    onRender: (scene: BABYLON.Scene) => void
 }
 
 const SceneComponent = (props: SceneProps) => {
@@ -25,7 +25,7 @@ const SceneComponent = (props: SceneProps) => {
         ...rest
     } = props
 
-    const reactCanvas = useRef<any>()
+    const canvas = useRef<any>()
 
     const [loaded, setLoaded] = useState<boolean>(false)
     const [scene, setScene] = useState<BABYLON.Scene>()
@@ -34,7 +34,6 @@ const SceneComponent = (props: SceneProps) => {
         if (window) {
             const resize = () => {
                 if (scene) {
-                    // @ts-ignore
                     scene.getEngine().resize()
                 }
             }
@@ -50,7 +49,7 @@ const SceneComponent = (props: SceneProps) => {
         if (!loaded) {
             setLoaded(true)
             const engine = new BABYLON.Engine(
-                reactCanvas.current,
+                canvas.current,
                 antialias,
                 engineOptions,
                 adaptToDeviceRatio
@@ -58,13 +57,13 @@ const SceneComponent = (props: SceneProps) => {
             const scene = new BABYLON.Scene(engine, sceneOptions)
             setScene(scene)
             if (scene.isReady()) {
-                onSceneReady!(scene)
+                onSceneReady(scene)
             } else {
-                scene.onReadyObservable.addOnce((scene) => onSceneReady!(scene))
+                scene.onReadyObservable.addOnce((scene) => onSceneReady(scene))
             }
 
             engine.runRenderLoop(() => {
-                onRender!(scene)
+                onRender(scene)
                 scene.render()
             })
         }
@@ -74,9 +73,9 @@ const SceneComponent = (props: SceneProps) => {
                 scene!.dispose()
             }
         }
-    }, [reactCanvas])
+    }, [canvas])
 
-    return <canvas ref={reactCanvas} {...rest} />
+    return <canvas ref={canvas} {...rest} />
 }
 
 export default SceneComponent
