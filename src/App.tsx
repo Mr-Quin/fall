@@ -1,30 +1,47 @@
-import React from 'react'
-import styled from 'styled-components'
-import Fall from './components/Fall'
-import { context } from 'tone'
-import { MoodProvider } from './components/Mood'
-import ChordDisplay from './components/ChordDisplay'
-import SceneViewer from './components/SceneViewer'
+import React, { useEffect } from 'react'
+import TitleScreen from './components/TitleScreen'
+import SceneViewer from './components/3d/SceneViewer'
+import Mood from './components/Mood'
 import useStore from './stores/store'
 import Footer from './components/Footer'
+import LoadingScreen from './components/LoadingScreen'
+import withFade from './components/hoc/withFade'
+import useToggle from './hooks/useToggle'
+import { FullScreen } from './styles'
 
-const AppStyle = styled.div`
-    width: 100vw;
-    height: 100vh;
-    padding: 0;
-    margin: 0;
-    background: #0b033a;
-`
+const LoadingBg = withFade(FullScreen)
+const TitleWrapper = withFade(FullScreen)
+
+const selector = (state) => [state.sceneReady, state.animationFinished, state.fallen]
 
 const App = () => {
-    const ready = useStore((state) => state.mutations.ready)
+    const [sceneReady, animationFinished, fallen] = useStore(selector)
+    const [renderLoadingScreen, toggleRenderLoadingScreen] = useToggle(true)
+
+    useEffect(() => {
+        if (!fallen) return
+        const timeout = setTimeout(toggleRenderLoadingScreen, 2000)
+        return () => clearTimeout(timeout)
+    }, [fallen])
 
     return (
-        <AppStyle>
-            <Fall ready={ready} />
+        <FullScreen background={'#030111'}>
+            {renderLoadingScreen && (
+                <TitleWrapper show={!fallen} transition>
+                    <LoadingBg
+                        show={!animationFinished}
+                        background={'#030111'}
+                        transition
+                        duration={'3s'}
+                    />
+                    <LoadingScreen show={!sceneReady} />
+                    {sceneReady && <TitleScreen show={sceneReady} />}
+                </TitleWrapper>
+            )}
+            {fallen && <Mood />}
             <SceneViewer />
-            {process.env.NODE_ENV === 'development' ? <Footer>Development</Footer> : null}
-        </AppStyle>
+            {process.env.NODE_ENV === 'development' ? <Footer>Development Build</Footer> : null}
+        </FullScreen>
     )
 }
 
