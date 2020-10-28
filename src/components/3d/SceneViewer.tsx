@@ -2,7 +2,6 @@ import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import * as BABYLON from '@babylonjs/core'
 import '@babylonjs/loaders/glTF'
-import '@babylonjs/inspector'
 
 import { start as toneStart } from 'tone'
 
@@ -57,8 +56,8 @@ const onSceneReady = async (scene) => {
 
     // debugging
     if (process.env.NODE_ENV === 'development') {
-        enableDebugMetrics()
         toggleOverlay()
+        enableDebugMetrics()
     }
 
     // camera

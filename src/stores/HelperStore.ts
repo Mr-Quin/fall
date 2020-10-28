@@ -1,9 +1,6 @@
 import * as BABYLON from '@babylonjs/core'
 import create from 'zustand'
 import useStore from './store'
-import * as BABYLONGUI from '@babylonjs/gui'
-import * as BABYLONMAT from '@babylonjs/materials'
-import { flare } from '../assets'
 
 // pull from other store, subscribe to changes
 let { scene, canvas, camera } = useStore.getState().statics
@@ -69,12 +66,15 @@ const useHelperStore = create<HelperState>((set, get) => ({
         scene!.autoClearDepthAndStencil = false // Depth and stencil, obviously
     },
 
-    toggleOverlay: () => {
+    toggleOverlay: async () => {
+        await import('@babylonjs/inspector')
+        await import('@babylonjs/core/Debug/debugLayer')
         const showing = scene!.debugLayer.isVisible()
         scene!.debugLayer.show({ overlay: !showing })
     },
 
-    enableDebugMetrics: () => {
+    enableDebugMetrics: async () => {
+        const BABYLONGUI = await import('@babylonjs/gui')
         const advancedTexture = BABYLONGUI.AdvancedDynamicTexture.CreateFullscreenUI('UI')
         const stackPanel = new BABYLONGUI.StackPanel()
         stackPanel.verticalAlignment = BABYLONGUI.Control.VERTICAL_ALIGNMENT_TOP
@@ -149,15 +149,18 @@ const useHelperStore = create<HelperState>((set, get) => ({
             { mass: 0, restitution: 0.9 },
             scene!
         )
-        const groundMat = new BABYLONMAT.GridMaterial('grid-material', scene!)
+        let groundMat
 
-        groundMat.majorUnitFrequency = 5
-        groundMat.minorUnitVisibility = 0.45
-        groundMat.gridRatio = 1
-        groundMat.opacity = 0.6
-        groundMat.mainColor = new BABYLON.Color3(1, 1, 1)
-        groundMat.lineColor = new BABYLON.Color3(1, 1, 1)
-        groundMat.backFaceCulling = false
+        import('@babylonjs/materials').then((BABYLONMAT) => {
+            groundMat = new BABYLONMAT.GridMaterial('grid-material', scene!)
+            groundMat.majorUnitFrequency = 5
+            groundMat.minorUnitVisibility = 0.45
+            groundMat.gridRatio = 1
+            groundMat.opacity = 0.6
+            groundMat.mainColor = new BABYLON.Color3(1, 1, 1)
+            groundMat.lineColor = new BABYLON.Color3(1, 1, 1)
+            groundMat.backFaceCulling = false
+        })
         // ground.material = groundMat
         return ground
     },
