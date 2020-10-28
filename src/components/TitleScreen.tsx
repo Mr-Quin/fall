@@ -1,19 +1,8 @@
 import React, { useCallback, useEffect } from 'react'
-import styled, { keyframes } from 'styled-components'
+import styled from 'styled-components'
 import useStore from '../stores/store'
 import AnimatedPath from './AnimatedPath'
 import { Center } from '../styles'
-
-const shiftDown = keyframes`
- 0% { top: 50%;transform: translate(-50%, -50%) scale(1)}
- 100% { top: 75%; transform: translate(-50%, -50%) scale(0.6)}
-`
-
-const blink = keyframes`
- 0% { top: 75%; transform: translate(-50%, -50%) scale(0.6)}
- 40% { top: 75%; transform: translate(-50%, -50%) scale(0.65)}
- 100% { top: 75%; transform: translate(-50%, -50%) scale(0.6)}
-`
 
 const HoverDiv = styled.button`
     background: none;
