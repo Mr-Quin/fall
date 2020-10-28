@@ -46,8 +46,8 @@ const TitleScreen = (props) => {
     }, [props.show])
 
     return (
-        <Center onClick={handleClick}>
-            <HoverDiv>
+        <Center>
+            <HoverDiv onClick={handleClick} aria-label={'Click to start'}>
                 <svg width={255} height={129} xmlns="http://www.w3.org/2000/svg">
                     {pathData.map((d, i) => {
                         if (i !== 0) i += 4
