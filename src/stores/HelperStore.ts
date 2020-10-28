@@ -29,12 +29,15 @@ type HelperState = {
     createRiseAnimation: (from: BABYLON.Vector3, to: BABYLON.Vector3) => BABYLON.Animation
     createBlinkAnimation: (orig: any) => BABYLON.Animation
     createLight: () => BABYLON.Light
-    createGroundParticleSystem: (texture: BABYLON.Texture) => BABYLON.GPUParticleSystem
+    createAmbientParticleSystem: (texture: BABYLON.Texture) => BABYLON.GPUParticleSystem
     createCollisionParticleSystem: (
         capacity: number,
         texture: BABYLON.Texture
     ) => BABYLON.ParticleSystem
-    createStarField: (capacity: number, texture: BABYLON.Texture) => BABYLON.ParticleSystem
+    createStarField: (
+        capacity: number,
+        texture: BABYLON.Texture
+    ) => BABYLON.ParticleSystem | BABYLON.GPUParticleSystem
     setPhysicsImposter: (
         object: BABYLON.AbstractMesh,
         type: number,
@@ -264,15 +267,15 @@ const useHelperStore = create<HelperState>((set, get) => ({
         // gravity
         particleSystem.gravity = new BABYLON.Vector3(0, 0, 0)
         // emission rate
-        particleSystem.emitRate = 35
-        // stop after
-        particleSystem.targetStopDuration = 0.1
+        particleSystem.manualEmitCount = 0
+        particleSystem.emitRate = 0
+        // set manualEmitCount to emit particles
         return particleSystem
     },
 
-    createGroundParticleSystem: (texture) => {
+    createAmbientParticleSystem: (texture) => {
         const gpuParticleSystem = new BABYLON.GPUParticleSystem(
-            'gp',
+            'ambient-particles',
             { capacity: 50, randomTextureSize: 1024 },
             scene!
         )
@@ -318,7 +321,11 @@ const useHelperStore = create<HelperState>((set, get) => ({
     },
 
     createStarField: (capacity, texture) => {
-        const particleSystem = new BABYLON.ParticleSystem('star-field', capacity, scene!)
+        const particleSystem = new BABYLON.GPUParticleSystem(
+            'star-field',
+            { capacity: capacity, randomTextureSize: 1024 },
+            scene!
+        )
         // create noise
         const noiseTexture = new BABYLON.NoiseProceduralTexture('perlin', 256, scene)
         noiseTexture.animationSpeedFactor = 1
@@ -355,7 +362,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
         // gravity
         particleSystem.gravity = new BABYLON.Vector3(0, 0, 0)
         // manual emit
-        particleSystem.manualEmitCount = capacity
+        particleSystem.emitRate = capacity
         return particleSystem
     },
 

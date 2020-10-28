@@ -4,7 +4,6 @@ import * as BABYLON from '@babylonjs/core'
 import '@babylonjs/loaders/glTF'
 import '@babylonjs/inspector'
 
-import * as Soundfont from 'soundfont-player'
 import { start as toneStart } from 'tone'
 
 import SceneComponent from './SceneComponent'
@@ -15,6 +14,7 @@ import useHelperStore from '../../stores/HelperStore'
 
 // star is loaded by file-loader as configured in config-overrides.js
 import { starGlb, star, starRound, flare } from '../../assets'
+import { randomRange } from '../../utils/utils'
 
 const BabylonScene = styled(SceneComponent)`
     width: 100vw;
@@ -34,12 +34,13 @@ const {
     createTransition,
     createBlinkAnimation,
     createCollisionParticleSystem,
-    createGroundParticleSystem,
+    createAmbientParticleSystem,
     createStarField,
     setPhysicsImposter,
     enableDebugMetrics,
     toggleOverlay,
 } = useHelperStore.getState()
+let playTone = useMoodStore.getState().play
 
 const onSceneReady = async (scene) => {
     scene.enablePhysics(new BABYLON.Vector3(0, -9.8, 0), new BABYLON.AmmoJSPlugin())
@@ -75,13 +76,9 @@ const onSceneReady = async (scene) => {
         dof_aperture: 0.8,
         dof_pentagon: true,
     }
-    const lensEffect = new BABYLON.LensRenderingPipeline(
-        'lensEffects',
-        lensParams,
-        scene,
-        1.0
-        // [camera]
-    )
+    const lensEffect = new BABYLON.LensRenderingPipeline('lensEffects', lensParams, scene, 1.0, [
+        camera,
+    ])
 
     // load star
     const {
@@ -113,12 +110,13 @@ const onSceneReady = async (scene) => {
     // make chains
     const chains = createChain(hangingPoint, starMesh, { distance: 0.6, count: 3, mass: 1 })
 
-    // set star position so it falls into screen
+    // set star position so it swings
     starMesh.position.set(3, 36, 0)
 
-    // setup camera goal. goal is slighted behind star to create smooth transitionTo
+    // setup camera goal. goal lerps to star to create smooth transitionTo
     const cameraGoal = new BABYLON.TransformNode('goal')
     cameraGoal.position = starMesh.position
+    camera.lockedTarget = cameraGoal
 
     // light attached to star
     const starLight = new BABYLON.PointLight('star-light', starMesh.position, scene)
@@ -128,62 +126,34 @@ const onSceneReady = async (scene) => {
     starLight.shadowEnabled = false
 
     // particle field following star
-    const ambientParticleField = BABYLON.Mesh.CreateBox(
+    const ambientPsEmitter = BABYLON.Mesh.CreateBox(
         'particle-field',
         1,
         scene
     ).convertToUnIndexedMesh()
-    ambientParticleField.isVisible = false
+    ambientPsEmitter.isVisible = false
 
     //goal and light follow star
     scene.onBeforeRenderObservable.add(() => {
         cameraGoal.position = BABYLON.Vector3.Lerp(cameraGoal.position, starMesh.position, 0.1)
         starLight.position = starMesh.position
-        ambientParticleField.position = cameraGoal.position
+        ambientPsEmitter.position = cameraGoal.position
     })
-
-    // attach camera to goal
-    camera.lockedTarget = cameraGoal
 
     // particle systems
     const collisionPs = createCollisionParticleSystem(50, new BABYLON.Texture(star, scene))
+    const starField1 = createStarField(80, new BABYLON.Texture(starRound, scene))
+    const starField2 = createStarField(240, new BABYLON.Texture(flare, scene))
+    const ambientPs = createAmbientParticleSystem(new BABYLON.Texture(flare, scene))
     collisionPs.emitter = starMesh
-    const ps2 = createStarField(80, new BABYLON.Texture(starRound, scene))
-    const ps3 = createStarField(240, new BABYLON.Texture(flare, scene))
-    const gps = createGroundParticleSystem(new BABYLON.Texture(flare, scene))
-    gps.emitter = ambientParticleField
-    ps2.start()
-    ps3.start()
-    // gps is started when star hits ground
+    ambientPs.emitter = ambientPsEmitter
+    collisionPs.start()
+    starField1.start()
+    starField2.start()
+    // ambientPs is started when star hits ground
 
     // animations
     const starLightAnimation = createBlinkAnimation(0.2)
-
-    // actions
-    const fall = async () => {
-        const babylonAudioContext = BABYLON.Engine.audioEngine.audioContext!
-        await babylonAudioContext.resume()
-        await toneStart()
-        chains.forEach((link) => link.dispose())
-        collisionPs.start()
-        gps.start()
-
-        const apertureObserver = scene.onBeforeRenderObservable.add(() => {
-            const { dof_aperture } = lensParams
-            lensParams.dof_aperture = BABYLON.Scalar.Lerp(dof_aperture, 0.08, 0.03)
-            lensEffect.setAperture(dof_aperture)
-            if (dof_aperture < 0.085) apertureObserver!.unregisterOnNextCall = true
-        })
-
-        let resolve // resolve when beta animation finishes
-        const promise = new Promise((res) => (resolve = res))
-
-        createTransition(camera, 'beta', Math.PI / 4, 20).then(() => {
-            resolve(1)
-            createTransition(camera, 'alpha', (3 / 4) * Math.PI, 55)
-        })
-        return promise
-    }
 
     // actions
     starMesh.actionManager = new BABYLON.ActionManager(scene)
@@ -198,14 +168,40 @@ const onSceneReady = async (scene) => {
             },
             () => {
                 console.log('bounce')
-                ps2.dispose()
-                ps3.dispose()
                 scene.beginDirectAnimation(starLight, [starLightAnimation], 0, 10)
-                useMoodStore.getState().play()
-                collisionPs.start()
+                collisionPs.manualEmitCount = randomRange(4, 8, true)
+                playTone()
             }
         )
     )
+
+    // star falls
+    const fall = async () => {
+        const babylonAudioContext = BABYLON.Engine.audioEngine.audioContext!
+        await babylonAudioContext.resume()
+        await toneStart()
+        chains.forEach((link) => link.dispose())
+        collisionPs.manualEmitCount = randomRange(4, 8, true)
+        ambientPs.start()
+
+        const apertureObserver = scene.onBeforeRenderObservable.add(() => {
+            const { dof_aperture } = lensParams
+            lensParams.dof_aperture = BABYLON.Scalar.Lerp(dof_aperture, 0.08, 0.03)
+            lensEffect.setAperture(dof_aperture)
+            if (dof_aperture < 0.085) apertureObserver!.unregisterOnNextCall = true
+        })
+
+        let resolve // resolves when beta transition finishes
+        const promise = new Promise((res) => (resolve = res))
+
+        createTransition(camera, 'beta', Math.PI / 4, 20).then(() => {
+            starField1.dispose()
+            starField2.dispose()
+            resolve(1)
+            createTransition(camera, 'alpha', (3 / 4) * Math.PI, 55)
+        })
+        return promise
+    }
 
     useStore.setState({ sceneReady: true })
     useStore.setState(({ actions }) => (actions.fall = fall) as any)

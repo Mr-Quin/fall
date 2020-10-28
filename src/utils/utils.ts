@@ -17,8 +17,9 @@ export const randomFromArray = (arr: any[]): any => {
     return arr[(Math.random() * arr.length) << 0]
 }
 
-export const randomRange = (min: number, max: number): number => {
-    return Math.random() * (max - min) + min
+export const randomRange = (min: number, max: number, int?: boolean): number => {
+    const num = Math.random() * (max - min) + min
+    return int ? num << 0 : num
 }
 
 export const mapValue: (...args: any[]) => number = (value, low1, high1, low2, high2) => {
