@@ -1,7 +1,6 @@
 /*
     Taken from the BabylonJS React snippet. Added static typing.
  */
-
 import React, { CanvasHTMLAttributes, DetailedHTMLProps, useEffect, useRef, useState } from 'react'
 import { EngineOptions, SceneOptions } from '@babylonjs/core'
 import { Scene } from '@babylonjs/core/scene'

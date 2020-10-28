@@ -31,9 +31,9 @@ import {
 } from '@babylonjs/core'
 
 // pull from other store, subscribe to changes
-let { scene, canvas, camera } = useStore.getState().statics
+let { scene } = useStore.getState().statics
 useStore.subscribe(
-    (state) => void ({ scene, canvas, camera } = state as any),
+    (state) => void ({ scene } = state as any),
     (state) => state.statics
 )
 

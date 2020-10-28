@@ -5,41 +5,41 @@ import { Engine } from '@babylonjs/core'
 import { instrument } from 'soundfont-player'
 import useStore from '../stores/store'
 
-const Mood = (props) => {
-    const progression = Progression.fromRomanNumerals('C', [
-        // Canon
-        'I',
-        'V',
-        'VIm',
-        'IIIm',
-        'IV',
-        'I',
-        'IV',
-        'V',
-    ])
-    // const progression = Progression.fromRomanNumerals('C', [
-    //     // Nier
-    //     'IM7',
-    //     'VIIm7',
-    //     'VIm7',
-    //     'VM7',
-    //     'IVM7',
-    //     'IIIm7',
-    //     'IIIbM7',
-    //     'II7',
-    // ])
-    // const progression = Progression.fromRomanNumerals('F', [
-    //     // Final Fantasy
-    //     'I',
-    //     'V',
-    //     'IV',
-    //     'IIIm',
-    //     'IV',
-    //     'II',
-    //     'Vsus4',
-    //     'V',
-    // ])
+const progression = Progression.fromRomanNumerals('C', [
+    // Canon
+    'I',
+    'V',
+    'VIm',
+    'IIIm',
+    'IV',
+    'I',
+    'IV',
+    'V',
+])
+// const progression = Progression.fromRomanNumerals('C', [
+//     // Nier
+//     'IM7',
+//     'VIIm7',
+//     'VIm7',
+//     'VM7',
+//     'IVM7',
+//     'IIIm7',
+//     'IIIbM7',
+//     'II7',
+// ])
+// const progression = Progression.fromRomanNumerals('F', [
+//     // Final Fantasy
+//     'I',
+//     'V',
+//     'IV',
+//     'IIIm',
+//     'IV',
+//     'II',
+//     'Vsus4',
+//     'V',
+// ])
 
+const Mood = (props) => {
     useEffect(() => {
         async function setTonePlayer() {
             const player = await instrument(

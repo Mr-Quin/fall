@@ -13,6 +13,7 @@ const LoadingBg = withFade(FullScreen)
 const TitleWrapper = withFade(FullScreen)
 
 const selector = (state) => [state.sceneReady, state.animationFinished, state.fallen]
+const background = useStore.getState().defaults.backgroundColor
 
 const App = () => {
     const [sceneReady, animationFinished, fallen] = useStore(selector)
@@ -25,12 +26,12 @@ const App = () => {
     }, [fallen])
 
     return (
-        <FullScreen background={'#030111'}>
+        <FullScreen background={background}>
             {renderLoadingScreen && (
                 <TitleWrapper show={!fallen} transition>
                     <LoadingBg
                         show={!animationFinished}
-                        background={'#030111'}
+                        background={background}
                         transition
                         duration={'3s'}
                     />

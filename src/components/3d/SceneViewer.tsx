@@ -41,6 +41,7 @@ const BabylonScene = styled(SceneComponent)`
 `
 
 const { init, playTone } = useStore.getState().actions
+const clearColor = useStore.getState().defaults.backgroundColor
 const {
     optimizeScene,
     createChain,
@@ -56,12 +57,6 @@ const {
     toggleOverlay,
 } = useHelperStore.getState()
 
-const randomizeRotation = (node) => {
-    node.rotation.x = randomRange(0, Math.PI / 2)
-    node.rotation.y = randomRange(0, Math.PI / 2)
-    node.rotation.z = randomRange(0, Math.PI / 2)
-}
-
 const createStep = (scene) => {
     const box = Mesh.CreateBox('step-box', 5, scene).convertToUnIndexedMesh()
     box.scaling.y = 0.2
@@ -72,12 +67,12 @@ const onSceneReady = async (scene) => {
     scene.enablePhysics(new Vector3(0, -9.8, 0), new AmmoJSPlugin())
     const canvas = scene.getEngine().getRenderingCanvas()
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
-    init(scene, canvas, camera)
+    await init(scene, canvas, camera)
 
     createLight()
     createGlow()
     optimizeScene()
-    scene.clearColor = Color3.Black()
+    scene.clearColor = Color3.FromHexString(clearColor)
 
     // debugging
     if (process.env.NODE_ENV === 'development') {
@@ -116,6 +111,7 @@ const onSceneReady = async (scene) => {
 
     // star physics
     starMesh.parent = null
+    starRoot.dispose()
     setPhysicsImposter(starMesh, PhysicsImpostor.BoxImpostor, {
         mass: 1,
         friction: 2,
@@ -156,7 +152,7 @@ const onSceneReady = async (scene) => {
     })
     let colliderYTarget = 0
     collider.position.set(0, 0, 0)
-    // collider.isVisible = false
+    collider.isVisible = false
 
     // particle field following star
     const ambientPsEmitter = Mesh.CreateBox('particle-field', 1, scene).convertToUnIndexedMesh()
@@ -170,11 +166,7 @@ const onSceneReady = async (scene) => {
             0.2
         )
         starLight.position = starMesh.position
-        collider.position.x = starMesh.position.x
-        collider.position.z = starMesh.position.z
-        collider.position.y = colliderYTarget
-        // collider.position.y = Scalar.Lerp(collider.position.y, colliderYTarget, 0.03)
-        randomizeRotation(collider)
+        collider.position.set(starMesh.position.x, colliderYTarget, starMesh.position.z)
     })
 
     // particle systems
@@ -217,7 +209,7 @@ const onSceneReady = async (scene) => {
         scene.beginDirectAnimation(starLight, [starLightAnimation], 0, 10)
         collisionPs.manualEmitCount = randomRange(3, 5, true)
         playTone()
-        colliderYTarget -= 10
+        colliderYTarget -= randomRange(8, 16, true)
 
         const step = createStep(scene)
         step.position.set(starMesh.position.x, starMesh.position.y - 1, starMesh.position.z)

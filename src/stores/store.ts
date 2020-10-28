@@ -8,6 +8,9 @@ type StoreState = {
     sceneReady: boolean
     animationFinished: boolean
     fallen: boolean
+    defaults: {
+        backgroundColor: string
+    }
     statics: {
         scene: Nullable<Scene>
         canvas: Nullable<HTMLCanvasElement>
@@ -23,8 +26,8 @@ type StoreState = {
             scene: Nullable<Scene>,
             canvas: Nullable<HTMLCanvasElement>,
             camera: Nullable<Camera>
-        ) => void
-        fall: () => void
+        ) => Promise<void>
+        fall: Nullable<() => void>
         playTone: () => void
     }
 }
@@ -33,6 +36,9 @@ const useStore = create<StoreState>((set, get) => ({
     sceneReady: false,
     animationFinished: false,
     fallen: false,
+    defaults: {
+        backgroundColor: '#0b061f',
+    },
     statics: {
         scene: null,
         canvas: null,
@@ -44,14 +50,16 @@ const useStore = create<StoreState>((set, get) => ({
         player: null,
     },
     actions: {
-        init: (scene, canvas, camera) => {
+        init: async (scene, canvas, camera) => {
             set((state) => ({ statics: { scene: scene, canvas: canvas, camera: camera } }))
+            return Promise.resolve()
         },
-        fall: () => void 0,
+        fall: null,
         playTone: () => {
             const notes = get().mutations.chord!.notes
             const note = randomFromArray(notes)
-            const octave = randomRange(6, 8, true)
+            let octave = randomRange(6, 7, true)
+            if (note === 'A' || note === 'B') octave -= 1
             const player = get().mutations.player
             player && player.play(`${note}${octave}`)
         },
