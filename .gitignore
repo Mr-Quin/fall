@@ -107,7 +107,7 @@ dist
 .idea/
 
 # Build
-.build/
+build/
 
 # Misc
 .DS_Store
