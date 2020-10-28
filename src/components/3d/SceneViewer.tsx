@@ -95,9 +95,9 @@ const onSceneReady = async (scene) => {
     // star physics
     starMesh.parent = null
     setPhysicsImposter(starMesh, BABYLON.PhysicsImpostor.BoxImpostor, {
-        mass: 10,
+        mass: 1,
         friction: 2,
-        restitution: 0.1,
+        restitution: 0.5,
     })
 
     const hangingPoint = BABYLON.Mesh.CreateBox('joint-root', 1, scene).convertToUnIndexedMesh()
@@ -169,7 +169,7 @@ const onSceneReady = async (scene) => {
             () => {
                 console.log('bounce')
                 scene.beginDirectAnimation(starLight, [starLightAnimation], 0, 10)
-                collisionPs.manualEmitCount = randomRange(4, 8, true)
+                collisionPs.manualEmitCount = randomRange(3, 5, true)
                 playTone()
             }
         )
