@@ -1,7 +1,9 @@
 import * as BABYLON from '@babylonjs/core'
 import create from 'zustand'
 import useStore from './store'
-import { AdvancedDynamicTexture, Control, StackPanel, TextBlock } from '@babylonjs/gui'
+import * as BABYLONGUI from '@babylonjs/gui'
+import * as BABYLONMAT from '@babylonjs/materials'
+import { flare } from '../assets'
 
 // pull from other store, subscribe to changes
 let { scene, canvas, camera } = useStore.getState().statics
@@ -17,12 +19,18 @@ interface ChainParams {
 }
 
 type HelperState = {
+    optimizeScene: () => void
     toggleOverlay: () => void
     enableDebugMetrics: () => void
+    createGlow: () => BABYLON.GlowLayer
+    createCamera: () => BABYLON.Camera
+    createGround: () => BABYLON.Mesh
     createEmissiveMaterial: (color: BABYLON.Color3) => BABYLON.PBRMetallicRoughnessMaterial
     createRiseAnimation: (from: BABYLON.Vector3, to: BABYLON.Vector3) => BABYLON.Animation
     createBlinkAnimation: (orig: any) => BABYLON.Animation
-    createBlinkParticleSystem: (
+    createLight: () => BABYLON.Light
+    createGroundParticleSystem: (texture: BABYLON.Texture) => BABYLON.GPUParticleSystem
+    createCollisionParticleSystem: (
         capacity: number,
         texture: BABYLON.Texture
     ) => BABYLON.ParticleSystem
@@ -37,6 +45,7 @@ type HelperState = {
         actionManager: BABYLON.ActionManager,
         actions: BABYLON.IAction | BABYLON.IAction[]
     ) => BABYLON.ActionManager
+    createTransition: (object: BABYLON.Node, prop: string, to: any, speed: number) => Promise<any>
     createChain: (
         startMesh: BABYLON.AbstractMesh,
         endMesh: BABYLON.AbstractMesh,
@@ -52,22 +61,27 @@ type HelperState = {
  * Turn some imperative code into functions
  */
 const useHelperStore = create<HelperState>((set, get) => ({
+    optimizeScene: () => {
+        scene!.autoClear = false // Color buffer
+        scene!.autoClearDepthAndStencil = false // Depth and stencil, obviously
+    },
+
     toggleOverlay: () => {
         const showing = scene!.debugLayer.isVisible()
         scene!.debugLayer.show({ overlay: !showing })
     },
 
     enableDebugMetrics: () => {
-        const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI('UI')
-        const stackPanel = new StackPanel()
-        stackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP
+        const advancedTexture = BABYLONGUI.AdvancedDynamicTexture.CreateFullscreenUI('UI')
+        const stackPanel = new BABYLONGUI.StackPanel()
+        stackPanel.verticalAlignment = BABYLONGUI.Control.VERTICAL_ALIGNMENT_TOP
         stackPanel.isVertical = true
         advancedTexture.addControl(stackPanel)
-        const frameTime = new TextBlock()
-        const averageFrameTime = new TextBlock()
-        const shaderTime = new TextBlock()
-        const shaderCount = new TextBlock()
-        const fps = new TextBlock()
+        const frameTime = new BABYLONGUI.TextBlock()
+        const averageFrameTime = new BABYLONGUI.TextBlock()
+        const shaderTime = new BABYLONGUI.TextBlock()
+        const shaderCount = new BABYLONGUI.TextBlock()
+        const fps = new BABYLONGUI.TextBlock()
 
         const applyTextStyles = (textBlocks) =>
             void textBlocks.forEach((textBlock) => {
@@ -99,6 +113,50 @@ const useHelperStore = create<HelperState>((set, get) => ({
             shaderCount.text = `Compiler shaders count: ${instrumentation.shaderCompilationTimeCounter.count}`
             fps.text = `FPS: ${engine.getFps().toFixed()}`
         })
+    },
+
+    createGlow: () => {
+        return new BABYLON.GlowLayer('glow', scene!, { mainTextureSamples: 2 })
+    },
+
+    createCamera: () => {
+        const camera = new BABYLON.ArcRotateCamera(
+            'Camera',
+            1.65,
+            3.14,
+            30,
+            new BABYLON.Vector3(0, 0, 0),
+            scene!
+        )
+        camera.setPosition(new BABYLON.Vector3(5, 10, 20))
+        camera.lowerRadiusLimit = 10
+        return camera
+    },
+
+    createGround: () => {
+        const ground = BABYLON.MeshBuilder.CreateGround(
+            'grid-ground',
+            { width: 50, height: 50 },
+            scene!
+        )
+        // ground.rotation.z = 0.3
+        ground.physicsImpostor = new BABYLON.PhysicsImpostor(
+            ground,
+            BABYLON.PhysicsImpostor.BoxImpostor,
+            { mass: 0, restitution: 0.9 },
+            scene!
+        )
+        const groundMat = new BABYLONMAT.GridMaterial('grid-material', scene!)
+
+        groundMat.majorUnitFrequency = 5
+        groundMat.minorUnitVisibility = 0.45
+        groundMat.gridRatio = 1
+        groundMat.opacity = 0.6
+        groundMat.mainColor = new BABYLON.Color3(1, 1, 1)
+        groundMat.lineColor = new BABYLON.Color3(1, 1, 1)
+        groundMat.backFaceCulling = false
+        // ground.material = groundMat
+        return ground
     },
 
     createEmissiveMaterial: (color): BABYLON.PBRMetallicRoughnessMaterial => {
@@ -164,8 +222,16 @@ const useHelperStore = create<HelperState>((set, get) => ({
         return animation
     },
 
-    createBlinkParticleSystem: (capacity, texture) => {
-        const particleSystem = new BABYLON.ParticleSystem('star-field', capacity, scene!)
+    createLight: () => {
+        const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene!)
+        light.intensity = 0.5
+        light.range = 1
+        light.diffuse = new BABYLON.Color3(0.05, 0, 0.2)
+        return light
+    },
+
+    createCollisionParticleSystem: (capacity, texture) => {
+        const particleSystem = new BABYLON.ParticleSystem('star-collision', capacity, scene!)
         // emitter
         particleSystem.createPointEmitter(BABYLON.Vector3.Zero(), BABYLON.Vector3.Zero())
         // texture
@@ -182,13 +248,13 @@ const useHelperStore = create<HelperState>((set, get) => ({
         particleSystem.maxLifeTime = 1
         // emission power
         particleSystem.minEmitPower = 1
-        particleSystem.maxEmitPower = 1.5
+        particleSystem.maxEmitPower = 1
         // speed gradient
-        particleSystem.addVelocityGradient(0, 4, 8)
+        particleSystem.addVelocityGradient(0, 3, 6)
         particleSystem.addVelocityGradient(1.0, -0.5, -1)
         // drag gradient
-        // particleSystem.addDragGradient(0, 0)
-        // particleSystem.addDragGradient(0.7, 0.8, 1.3)
+        particleSystem.addDragGradient(0, 0.3)
+        particleSystem.addDragGradient(1, 0.7)
         // rotation
         particleSystem.minAngularSpeed = -Math.PI * 2
         particleSystem.maxAngularSpeed = Math.PI * 2
@@ -202,6 +268,53 @@ const useHelperStore = create<HelperState>((set, get) => ({
         // stop after
         particleSystem.targetStopDuration = 0.1
         return particleSystem
+    },
+
+    createGroundParticleSystem: (texture) => {
+        const gpuParticleSystem = new BABYLON.GPUParticleSystem(
+            'gp',
+            { capacity: 50, randomTextureSize: 1024 },
+            scene!
+        )
+        const noiseTexture = new BABYLON.NoiseProceduralTexture('perlin', 256, scene)
+        noiseTexture.animationSpeedFactor = 2
+        noiseTexture.brightness = 0.5
+        noiseTexture.octaves = 5
+        gpuParticleSystem.noiseTexture = noiseTexture
+
+        gpuParticleSystem.noiseStrength = new BABYLON.Vector3(1, 1, 1)
+        gpuParticleSystem.emitRate = 10
+        gpuParticleSystem.minLifeTime = 3
+        gpuParticleSystem.maxLifeTime = 7
+        gpuParticleSystem.createBoxEmitter(
+            new BABYLON.Vector3(0, 1, 0),
+            BABYLON.Vector3.Zero(),
+            new BABYLON.Vector3(-10, 2, -10),
+            new BABYLON.Vector3(10, 0.1, 10)
+        )
+        gpuParticleSystem.particleTexture = texture
+        gpuParticleSystem.updateSpeed = 0.01
+        gpuParticleSystem.minSize = 0.05
+        gpuParticleSystem.maxSize = 0.05
+
+        gpuParticleSystem.addColorGradient(0, new BABYLON.Color4(0, 0, 0, 0))
+        gpuParticleSystem.addColorGradient(
+            0.2,
+            new BABYLON.Color4(0.4, 0.3, 0.8, 1),
+            new BABYLON.Color4(0.2, 0.9, 0.8, 1)
+        )
+        gpuParticleSystem.addColorGradient(0.8, new BABYLON.Color4(0.8, 0.3, 0.2, 1))
+        gpuParticleSystem.addColorGradient(1, new BABYLON.Color4(0, 0, 0, 0))
+
+        gpuParticleSystem.addSizeGradient(0, 0.2)
+        gpuParticleSystem.addSizeGradient(0.3, 0.02)
+        gpuParticleSystem.addSizeGradient(0.7, 0.15)
+        gpuParticleSystem.addSizeGradient(1, 0.02)
+
+        gpuParticleSystem.maxEmitPower = 0
+        gpuParticleSystem.minEmitPower = 0
+
+        return gpuParticleSystem
     },
 
     createStarField: (capacity, texture) => {
@@ -258,6 +371,26 @@ const useHelperStore = create<HelperState>((set, get) => ({
         return actionManager
     },
 
+    createTransition: (object, prop, to, speed) => {
+        const ease = new BABYLON.CubicEase()
+        ease.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT)
+
+        return new Promise((res, rej) => {
+            BABYLON.Animation.CreateAndStartAnimation(
+                'transition-animation',
+                object,
+                prop,
+                speed,
+                120,
+                object[prop],
+                to,
+                0,
+                ease,
+                res
+            )
+        })
+    },
+
     createChain: (startMesh, endMesh, options) => {
         const defaultOptions: ChainParams = {
             count: 3,
@@ -280,7 +413,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
             connectedPivot: new BABYLON.Vector3(0, distance, 0),
         }
         for (let i = 0; i < count; i++) {
-            const link = BABYLON.Mesh.CreateBox('joint-box', 0.3, scene!)
+            const link = BABYLON.Mesh.CreateBox('joint-box', 0.3, scene!).convertToUnIndexedMesh()
 
             link.position = new BABYLON.Vector3(
                 startMesh.position.x,
