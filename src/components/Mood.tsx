@@ -1,20 +1,11 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { Progression, Chord, Note } from '@tonaljs/tonal'
-import { context, Transport } from 'tone'
+import { useEffect } from 'react'
+import { Progression, Chord } from '@tonaljs/tonal'
+import { Transport } from 'tone'
+import useMoodStore from '../stores/moodStore'
+import * as Soundfont from 'soundfont-player'
+import * as BABYLON from '@babylonjs/core'
 
-interface Mood {
-    bpm: number
-    keys: Array<string>
-    chordName: string
-    setBpm: Function
-    toggleTransport: Function
-}
-
-const MoodContext = createContext<Partial<Mood>>({})
-
-const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
-    const [chord, setChord] = useState<any>({})
-
+const Mood = (props) => {
     // const chords = Progression.fromRomanNumerals("C", ['Im', 'Vm', 'VIb', 'IIIb', 'IVm', 'Im', 'II', 'V']);
     // const chords = Progression.fromRomanNumerals('C', [  // Canon
     //     'I',
@@ -37,7 +28,7 @@ const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
     //     'IIIbM7',
     //     'II7',
     // ])
-    const chords = Progression.fromRomanNumerals('F', [
+    const progression = Progression.fromRomanNumerals('F', [
         // Final Fantasy
         'I',
         'V',
@@ -50,33 +41,31 @@ const MoodProvider: React.FunctionComponent<any> = ({ ...props }) => {
     ])
 
     useEffect(() => {
-        let i = 0
-        Transport.scheduleRepeat((time) => {
-            setChord(Chord.get(chords[i]))
-            i += 1
-            if (i >= chords.length) i = 0
-        }, '1n')
-        Transport.start()
-        Transport.bpm.value = 90
-
-        return () => {
-            Transport.stop()
+        async function anon() {
+            const player = await Soundfont.instrument(
+                BABYLON.Engine.audioEngine.audioContext as AudioContext,
+                'celesta',
+                { gain: 2 }
+            )
+            useMoodStore.setState({ player })
         }
+        anon().then(() => {
+            let i = 0
+            Transport.scheduleRepeat((time) => {
+                const chord = Chord.get(progression[i])
+                useMoodStore.setState({ chord })
+                i += 1
+                if (i >= progression.length) i = 0
+            }, '1n')
+
+            Transport.start()
+            Transport.bpm.value = 80
+        })
+
+        return () => void Transport.stop()
     }, [])
 
-    const value = {
-        bpm: Transport.bpm.value,
-        keys: chord.notes,
-        chordName: chord.name,
-    }
-
-    return <MoodContext.Provider value={value}>{props.children}</MoodContext.Provider>
+    return null
 }
 
-const useMood = () => {
-    const context = useContext(MoodContext)
-    if (context === undefined) throw new Error('Must be used within MoonContext')
-    return context
-}
-
-export { MoodContext, useMood, MoodProvider }
+export default Mood
