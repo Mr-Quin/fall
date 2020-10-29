@@ -69,10 +69,10 @@ const onSceneReady = async (scene) => {
     scene.clearColor = Color3.FromHexString(clearColor)
 
     // debugging
-    // if (process.env.NODE_ENV === 'development') {
-    //     toggleOverlay()
-    //     enableDebugMetrics()
-    // }
+    if (process.env.NODE_ENV === 'development') {
+        toggleOverlay()
+        enableDebugMetrics()
+    }
 
     // camera
     camera.attachControl(canvas, true)
@@ -268,7 +268,7 @@ const onSceneReady = async (scene) => {
 
     useStore.setState({ sceneReady: true })
     useStore.setState(({ actions }) => (actions.fall = fall) as any)
-    console.log('Ready')
+    console.info('Scene is ready')
 }
 
 const SceneViewer = (props) => {
