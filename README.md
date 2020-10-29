@@ -1,17 +1,28 @@
-# strings
+# fall
+A "game" where a star falls.
 
-Strings is an audio-visual experience on the web, built with React
+![alt text](./img/sample.png "Fall Title Screenshot")
 
-## Demo
+
+# Demo
+A slightly outdated version is available at https://development.d3e91ion2xbpxn.amplifyapp.com/
+
+For an up-to-date demo, run this project locally.
+
+# Dependencies
+* [react](https://reactjs.org/)
+* [styled-components](https://styled-components.com/)
+* [zustand](https://github.com/pmndrs/zustand)
+* [babylon.js](https://www.babylonjs.com/)
+* [tone.js](https://tonejs.github.io/)
+* [soundfont-player](https://github.com/danigb/soundfont-player)
+
 
 ## Run locally
-    git clone https://github.com/Mr-Quin/strings.git
+You need to have Git and NodeJS to run the following commands:
+
+    git clone https://github.com/Mr-Quin/fall.git
+    npm i
     npm run start
     
-## Build dependencies
-* [threejs](https://threejs.org/)
-* [react-three-fiber](https://github.com/react-spring/react-three-fiber/tree/master)
-* [react-spring ecosystem](https://github.com/react-spring/react-three-fiber/tree/master#ecosystem)
-* [tonejs](https://tonejs.github.io/)
-* [tonaljs](https://github.com/tonaljs/tonal)
-* [styled-components](https://styled-components.com/)
+This project is created with create-react-app
