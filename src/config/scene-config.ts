@@ -19,6 +19,14 @@ export const logArt = () => {
 }
 
 export const sceneConfig = {}
+
+export const defaults = {
+    backgroundColor: '#0b061f',
+    starColor: '#ffa807',
+}
+
+export default sceneConfig
+
 /*
     TODO: Refactor:
           Move default values to config
