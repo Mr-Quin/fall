@@ -3,7 +3,6 @@ import styled from 'styled-components'
 
 import {
     ActionManager,
-    AmmoJSPlugin,
     ArcRotateCamera,
     CannonJSPlugin,
     Color3,
@@ -30,7 +29,7 @@ import useStore from '../../stores/store'
 import useHelperStore from '../../stores/HelperStore'
 
 // star is loaded by file-loader as configured in config-overrides.js
-import { starGlb, star, starRound, flare } from '../../assets'
+import { flare, star, starGlb, starRound } from '../../assets'
 import { randomRange } from '../../utils/utils'
 
 const BabylonScene = styled(SceneComponent)`
@@ -44,7 +43,6 @@ const BabylonScene = styled(SceneComponent)`
 const { init, playTone } = useStore.getState().actions
 const clearColor = useStore.getState().defaults.backgroundColor
 const {
-    optimizeScene,
     createChain,
     createGlow,
     createLight,
@@ -58,28 +56,23 @@ const {
     toggleOverlay,
 } = useHelperStore.getState()
 
-const createStep = (scene) => {
-    const box = Mesh.CreateBox('step-box', 5, scene).convertToUnIndexedMesh()
-    box.scaling.y = 0.2
-    return box
-}
-
 const onSceneReady = async (scene) => {
     scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false))
     const canvas = scene.getEngine().getRenderingCanvas()
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
     await init(scene, canvas, camera)
 
+    scene!.autoClear = false // Color buffer
+    scene!.autoClearDepthAndStencil = false // Depth and stencil, obviously
     createLight()
     createGlow()
-    optimizeScene()
     scene.clearColor = Color3.FromHexString(clearColor)
 
     // debugging
-    if (process.env.NODE_ENV === 'development') {
-        toggleOverlay()
-        enableDebugMetrics()
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //     toggleOverlay()
+    //     enableDebugMetrics()
+    // }
 
     // camera
     camera.attachControl(canvas, true)
@@ -109,10 +102,11 @@ const onSceneReady = async (scene) => {
         null,
         '.glb'
     )
+    starMesh.parent = null
+    starMesh.material!.freeze()
+    starRoot.dispose()
 
     // star physics
-    starMesh.parent = null
-    starRoot.dispose()
     setPhysicsImposter(starMesh, PhysicsImpostor.BoxImpostor, {
         mass: 1,
         friction: 2,
@@ -127,10 +121,15 @@ const onSceneReady = async (scene) => {
     })
 
     // make chains
-    const chains = createChain(hangingPoint, starMesh, { distance: 0.6, count: 3, mass: 1 })
+    const chains = createChain(hangingPoint, starMesh, {
+        distance: 1,
+        count: 1,
+        mass: 1,
+        hideChains: true,
+    })
 
     // set star position so it swings
-    starMesh.position.set(3, 36, 0)
+    starMesh.position.set(0, 35, 0)
 
     // setup camera goal. goal lerps to star to create smooth transitionTo
     const cameraGoal = new TransformNode('goal')
@@ -164,7 +163,7 @@ const onSceneReady = async (scene) => {
         ambientPsEmitter.position = cameraGoal.position = Vector3.Lerp(
             cameraGoal.position,
             starMesh.position,
-            0.2
+            0.1
         )
         starLight.position = starMesh.position
         collider.position.set(starMesh.position.x, colliderYTarget, starMesh.position.z)
@@ -204,16 +203,26 @@ const onSceneReady = async (scene) => {
     // animations
     const starLightAnimation = createBlinkAnimation(0.2)
 
+    let bounces = 0
+    const step = Mesh.CreateBox('step-box', 3, scene).convertToUnIndexedMesh()
+    step.scaling.set(1, 1 / 5, 1)
+    step.isVisible = false
+
+    const createStep = () => {
+        return step.createInstance(`step-box-clone-${bounces.toString()}`)
+    }
+
     // actions
     const onCollision = () => {
         console.log('bounce')
+        bounces += 1
         scene.beginDirectAnimation(starLight, [starLightAnimation], 0, 10)
         collisionPs.manualEmitCount = randomRange(3, 5, true)
         playTone()
         colliderYTarget -= randomRange(8, 16, true)
 
-        const step = createStep(scene)
-        step.position.set(starMesh.position.x, starMesh.position.y - 1, starMesh.position.z)
+        const step = createStep()
+        step.position.set(starMesh.position.x, starMesh.position.y - 3 / 5, starMesh.position.z)
     }
     starMesh.actionManager = new ActionManager(scene)
     starMesh.actionManager.registerAction(
@@ -271,10 +280,10 @@ const SceneViewer = (props) => {
                 antialias
                 onSceneReady={onSceneReady}
                 onRender={onRender}
-                engineOptions={{
-                    deterministicLockstep: true,
-                    lockstepMaxSteps: 4,
-                }}
+                // engineOptions={{
+                //     deterministicLockstep: true,
+                //     lockstepMaxSteps: 4,
+                // }}
             />
         </>
     )
