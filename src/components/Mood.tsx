@@ -48,8 +48,9 @@ const Mood = (props) => {
                 { gain: 2 }
             )
             useStore.setState((state) => (state.mutations.player = player as any))
+            return player
         }
-        setTonePlayer().then(() => {
+        setTonePlayer().then((player) => {
             let i = 0
 
             Transport.scheduleRepeat(() => {
