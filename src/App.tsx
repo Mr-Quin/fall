@@ -8,6 +8,7 @@ import LoadingScreen from './components/LoadingScreen'
 import withFade from './components/hoc/withFade'
 import useToggle from './hooks/useToggle'
 import { FullScreen } from './styles'
+import { logArt } from './config/scene-config'
 
 const LoadingBg = withFade(FullScreen)
 const TitleWrapper = withFade(FullScreen)
@@ -18,6 +19,8 @@ const background = useStore.getState().defaults.backgroundColor
 const App = () => {
     const [sceneReady, animationFinished, fallen] = useStore(selector)
     const [renderLoadingScreen, toggleRenderLoadingScreen] = useToggle(true)
+
+    useEffect(logArt, [])
 
     useEffect(() => {
         if (!fallen) return
