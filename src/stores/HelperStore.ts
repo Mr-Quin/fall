@@ -37,10 +37,11 @@ useStore.subscribe(
     (state) => state.statics
 )
 
-interface ChainParams {
+type ChainOptions = {
     count: number
     distance: number
     mass: number
+    hideChains: boolean
 }
 
 type HelperState = {
@@ -51,7 +52,7 @@ type HelperState = {
     createChain: (
         startMesh: AbstractMesh,
         endMesh: AbstractMesh,
-        options?: Partial<ChainParams>
+        options?: Partial<ChainOptions>
     ) => AbstractMesh[]
     createCollisionParticleSystem: (capacity: number, texture: Texture) => ParticleSystem
     createEmissiveMaterial: (color: Color3) => PBRMetallicRoughnessMaterial
@@ -67,7 +68,6 @@ type HelperState = {
     ) => ParticleSystem | GPUParticleSystem
     createTransition: (object: Node, prop: string, to: any, speed: number) => Promise<any>
     enableDebugMetrics: () => void
-    optimizeScene: () => void
     setActionManager: (mesh: AbstractMesh) => ActionManager
     setPhysicsImposter: (
         object: AbstractMesh,
@@ -171,10 +171,11 @@ const useHelperStore = create<HelperState>((set, get) => ({
     },
 
     createChain: (startMesh, endMesh, options) => {
-        const defaultOptions: ChainParams = {
+        const defaultOptions: ChainOptions = {
             count: 3,
             distance: 0.5,
             mass: 1,
+            hideChains: false,
         }
 
         if (options) {
@@ -183,7 +184,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
             }
         }
 
-        const { count, distance, mass } = defaultOptions
+        const { count, distance, mass, hideChains } = defaultOptions
 
         const links: AbstractMesh[] = []
         const jointData = {
@@ -191,7 +192,8 @@ const useHelperStore = create<HelperState>((set, get) => ({
             connectedPivot: new Vector3(0, distance, 0),
         }
         for (let i = 0; i < count; i++) {
-            const link = Mesh.CreateBox('joint-box', 0.3, scene!).convertToUnIndexedMesh()
+            const link = Mesh.CreateBox(`joint-box-${i}`, 0.3, scene!).convertToUnIndexedMesh()
+            link.isVisible = !hideChains
 
             link.position = new Vector3(
                 startMesh.position.x,
@@ -199,7 +201,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
                 startMesh.position.z
             )
 
-            const physicsImposter = get().setPhysicsImposter(link, PhysicsImpostor.NoImpostor, {
+            const physicsImposter = get().setPhysicsImposter(link, PhysicsImpostor.BoxImpostor, {
                 mass: mass,
             })
 
@@ -208,7 +210,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
             if (i > 0) {
                 links[i - 1].physicsImpostor!.createJoint(
                     physicsImposter,
-                    PhysicsJoint.PointToPointJoint,
+                    PhysicsJoint.BallAndSocketJoint,
                     jointData
                 )
             }
@@ -216,7 +218,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
 
         startMesh.physicsImpostor!.createJoint(
             links[0].physicsImpostor!,
-            PhysicsJoint.PointToPointJoint,
+            PhysicsJoint.BallAndSocketJoint,
             jointData
         )
 
@@ -224,7 +226,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
 
         links[links.length - 1].physicsImpostor!.createJoint(
             endMesh.physicsImpostor!,
-            PhysicsJoint.PointToPointJoint,
+            PhysicsJoint.BallAndSocketJoint,
             jointData
         )
 
@@ -457,11 +459,6 @@ const useHelperStore = create<HelperState>((set, get) => ({
         })
     },
 
-    optimizeScene: () => {
-        scene!.autoClear = false // Color buffer
-        scene!.autoClearDepthAndStencil = false // Depth and stencil, obviously
-    },
-
     setActionManager: (mesh) => {
         return (mesh.actionManager = new ActionManager(scene!))
     },
@@ -474,7 +471,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
         await import('@babylonjs/inspector')
         await import('@babylonjs/core/Debug/debugLayer')
         const showing = scene!.debugLayer.isVisible()
-        scene!.debugLayer.show({ overlay: !showing })
+        await scene!.debugLayer.show({ overlay: !showing })
     },
 }))
 
