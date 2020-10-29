@@ -8,6 +8,7 @@ const FullScreen = styled.div`
     width: 100vw;
     height: 100vh;
     background: ${({ background }) => background || 'none'};
+    opacity: ${({ opacity }) => opacity || 1};
     ${({ blur }) => blur && 'backdrop-filter: blur(2px);'}
 `
 

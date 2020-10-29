@@ -5,6 +5,7 @@ import {
     ActionManager,
     AmmoJSPlugin,
     ArcRotateCamera,
+    CannonJSPlugin,
     Color3,
     Color4,
     Engine,
@@ -64,7 +65,7 @@ const createStep = (scene) => {
 }
 
 const onSceneReady = async (scene) => {
-    scene.enablePhysics(new Vector3(0, -9.8, 0), new AmmoJSPlugin())
+    scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false))
     const canvas = scene.getEngine().getRenderingCanvas()
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
     await init(scene, canvas, camera)
@@ -266,7 +267,15 @@ const SceneViewer = (props) => {
 
     return (
         <>
-            <BabylonScene antialias onSceneReady={onSceneReady} onRender={onRender} />
+            <BabylonScene
+                antialias
+                onSceneReady={onSceneReady}
+                onRender={onRender}
+                engineOptions={{
+                    deterministicLockstep: true,
+                    lockstepMaxSteps: 4,
+                }}
+            />
         </>
     )
 }

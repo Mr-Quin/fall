@@ -208,7 +208,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
             if (i > 0) {
                 links[i - 1].physicsImpostor!.createJoint(
                     physicsImposter,
-                    PhysicsJoint.BallAndSocketJoint,
+                    PhysicsJoint.PointToPointJoint,
                     jointData
                 )
             }
@@ -216,7 +216,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
 
         startMesh.physicsImpostor!.createJoint(
             links[0].physicsImpostor!,
-            PhysicsJoint.BallAndSocketJoint,
+            PhysicsJoint.PointToPointJoint,
             jointData
         )
 
@@ -224,7 +224,7 @@ const useHelperStore = create<HelperState>((set, get) => ({
 
         links[links.length - 1].physicsImpostor!.createJoint(
             endMesh.physicsImpostor!,
-            PhysicsJoint.BallAndSocketJoint,
+            PhysicsJoint.PointToPointJoint,
             jointData
         )
 

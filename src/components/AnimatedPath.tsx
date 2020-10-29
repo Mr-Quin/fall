@@ -7,7 +7,7 @@ const strokeAnim = keyframes`
   }
 `
 
-const pathAnim = keyframes`
+const fillAnim = keyframes`
     to {
       fill-opacity: 1;
     }
@@ -17,7 +17,7 @@ const StyledPath = styled.path`
     stroke-dasharray: ${(props) => props.length};
     stroke-dashoffset: ${(props) => props.length};
     fill-opacity: ${(props) => (props.animateFill ? 0 : 1)};
-    animation-name: ${strokeAnim}, ${pathAnim};
+    animation-name: ${strokeAnim}, ${fillAnim};
     animation-duration: ${(props) => props.animationDuration || '1s'};
     animation-fill-mode: ${(props) => props.animationFillMode || 'forwards'};
     animation-delay: ${(props) => props.animationDelay || '0, 1s'};
