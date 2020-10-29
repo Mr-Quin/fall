@@ -19,3 +19,22 @@ export const logArt = () => {
 }
 
 export const sceneConfig = {}
+/*
+    TODO: Refactor:
+          Move default values to config
+          Use config for particle systems
+          Detect GPU to set particle count
+          CPU Particle fallback
+          Reduce imperative code
+ */
+
+/*
+    TODO: Features:
+          No repeated sound on bounce
+          Background color change with time/sound
+          Noise background?
+          Step colors?
+          Particle color change?
+          Ambient sound
+          Button to end game by making ground
+ */
