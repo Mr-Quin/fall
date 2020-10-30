@@ -122,8 +122,8 @@ export const createParticleSystem = <T>(
 /*
     TODO: Features:
           No repeated sound on bounce   --- done
-          Background color change with time/sound
-          Noise background?
+          Background color change with time/sound --- doable
+          Noise background?             --- difficult
           Step colors?
           Particle color change?
           Ambient sound
