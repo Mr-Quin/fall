@@ -31,13 +31,13 @@ export const mapValue: (...args: any[]) => number = (value, low1, high1, low2, h
     return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1)
 }
 
-export const chunk = (array: any[], size: number): any[] => {
-    let index: number = 0
-    const arrayLength: number = array.length
-    const tempArray: any[] = []
+export const chunk = <T>(array: T[], size: number): T[][] => {
+    let i = 0
+    const arrayLength = array.length
+    const tempArray: T[][] = []
 
-    for (index = 0; index < arrayLength; index += size) {
-        const chunk = array.slice(index, index + size)
+    for (i = 0; i < arrayLength; i += size) {
+        const chunk = array.slice(i, i + size)
         tempArray.push(chunk)
     }
 
@@ -53,6 +53,6 @@ export const lerp = (v0: number, v1: number, t: number): number => {
     return v0 * (1 - t) + v1 * t
 }
 
-export const normalize = (val, max, min) => {
+export const normalize = (val: number, max: number, min: number): number => {
     return (val - min) / (max - min)
 }
