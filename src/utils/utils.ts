@@ -1,22 +1,5 @@
-/**
- *
- * @param array     The array to pick from
- * @param compare   Optional comparison value. The return value will be different from this value.
- *                  If no element in the array has a different value, an error will be thrown.
- * @returns         A random element from the array.
- */
-export const randomFromArray = <T>(array: T[], compare?: T): T => {
-    if (compare !== undefined) {
-        if (!array.some((elt) => elt !== compare))
-            throw new Error('Array does not contain elements that differs from compare')
-
-        let value = array[(Math.random() * array.length) << 0]
-        while (Object.is(value, compare)) {
-            value = array[(Math.random() * array.length) << 0]
-        }
-        return value
-    }
-    return array[(Math.random() * array.length) << 0]
+export const randomFromArray = (arr: any[]): any => {
+    return arr[(Math.random() * arr.length) << 0]
 }
 
 export const randomRange = (min: number, max: number, floor?: boolean): number => {
@@ -51,8 +34,11 @@ export const chunk = <T>(array: T[], size: number): T[][] => {
 }
 
 export const clamp = (x: number, min: number, max: number): number => {
-    const d = x < min ? min : x
-    return d > max ? max : d
+    if (x < min) {
+        return min
+    } else if (x > max) {
+        return max
+    } else return x
 }
 
 export const lerp = (v0: number, v1: number, t: number): number => {
