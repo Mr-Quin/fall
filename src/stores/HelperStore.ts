@@ -28,6 +28,7 @@ import {
     Vector3,
     Animation,
     Node,
+    SceneInstrumentation,
 } from '@babylonjs/core'
 
 // pull from other store, subscribe to changes
@@ -460,12 +461,14 @@ const useHelperStore = create<HelperState>((set, get) => ({
         const advancedTexture = BABYLONGUI.AdvancedDynamicTexture.CreateFullscreenUI('UI')
         const stackPanel = new BABYLONGUI.StackPanel()
         stackPanel.verticalAlignment = BABYLONGUI.Control.VERTICAL_ALIGNMENT_TOP
+        stackPanel.topInPixels = 30
         stackPanel.isVertical = true
         advancedTexture.addControl(stackPanel)
         const frameTime = new BABYLONGUI.TextBlock()
         const averageFrameTime = new BABYLONGUI.TextBlock()
         const shaderTime = new BABYLONGUI.TextBlock()
         const shaderCount = new BABYLONGUI.TextBlock()
+        const physicsTime = new BABYLONGUI.TextBlock()
         const fps = new BABYLONGUI.TextBlock()
 
         const applyTextStyles = (textBlocks) =>
@@ -477,25 +480,30 @@ const useHelperStore = create<HelperState>((set, get) => ({
                 stackPanel.addControl(textBlock)
             })
 
-        applyTextStyles([frameTime, averageFrameTime, shaderTime, shaderCount, fps])
+        applyTextStyles([frameTime, averageFrameTime, shaderTime, shaderCount, physicsTime, fps])
 
         const engine = scene!.getEngine()
-        const instrumentation = new EngineInstrumentation(engine)
+        const engineInstrumentation = new EngineInstrumentation(engine)
+        const sceneInstrumentation = new SceneInstrumentation(scene!)
 
-        instrumentation.captureGPUFrameTime = true
-        instrumentation.captureShaderCompilationTime = true
+        engineInstrumentation.captureGPUFrameTime = true
+        engineInstrumentation.captureShaderCompilationTime = true
+        sceneInstrumentation.capturePhysicsTime = true
 
         scene!.registerBeforeRender(() => {
             frameTime.text = `Current frame time (GPU): ${(
-                instrumentation.gpuFrameTimeCounter.current * 0.000001
+                engineInstrumentation.gpuFrameTimeCounter.current * 0.000001
             ).toFixed(2)} ms`
             averageFrameTime.text = `Average frame time (GPU): ${(
-                instrumentation.gpuFrameTimeCounter.average * 0.000001
+                engineInstrumentation.gpuFrameTimeCounter.average * 0.000001
             ).toFixed(2)} ms`
-            shaderTime.text = `Total shader compilation time: ${instrumentation.shaderCompilationTimeCounter.total.toFixed(
+            shaderTime.text = `Total shader compilation time: ${engineInstrumentation.shaderCompilationTimeCounter.total.toFixed(
                 2
             )} ms`
-            shaderCount.text = `Compiler shaders count: ${instrumentation.shaderCompilationTimeCounter.count}`
+            shaderCount.text = `Compiler shaders count: ${engineInstrumentation.shaderCompilationTimeCounter.count}`
+            physicsTime.text = `Current physics time: ${sceneInstrumentation.physicsTimeCounter.current.toFixed(
+                2
+            )} ms`
             fps.text = `FPS: ${engine.getFps().toFixed()}`
         })
     },
