@@ -27,9 +27,6 @@ export const mapValue = (
     low2: number,
     high2: number
 ): number => {
-    if (value > high1) {
-        return high2
-    }
     return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1)
 }
 
