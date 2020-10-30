@@ -1,23 +1,8 @@
 import React, { useCallback, useEffect } from 'react'
-import styled from 'styled-components'
 import useStore from '../stores/store'
 import AnimatedPath from './AnimatedPath'
-import { FullScreen } from '../styles'
+import { FullScreen, HoverButton } from '../styles'
 
-const HoverDiv = styled.button`
-    background: none;
-    border: none;
-    outline: none;
-    padding: 0;
-    margin: 0;
-    transition: all 0.3s ease-in;
-    ${({ disabled }) =>
-        !disabled &&
-        `cursor: pointer;    
-        &:hover {
-        transform: scale(1.05);
-        }`}
-`
 
 // const pathData = [
 //     'M255,129H0V0H255ZM1,128H254V1H1Z',
