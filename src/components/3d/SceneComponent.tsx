@@ -12,8 +12,8 @@ interface SceneProps
     engineOptions?: EngineOptions
     sceneOptions?: SceneOptions
     adaptToDeviceRatio?: boolean
-    onSceneReady: (scene: Scene) => void
-    onRender: (scene: Scene) => void
+    onSceneReady?: (scene: Scene) => void
+    onRender?: (scene: Scene) => void
 }
 
 const SceneComponent = (props: SceneProps) => {
@@ -53,16 +53,23 @@ const SceneComponent = (props: SceneProps) => {
             const engine = new Engine(canvas.current, antialias, engineOptions, adaptToDeviceRatio)
             const scene = new Scene(engine, sceneOptions)
             setScene(scene)
-            if (scene.isReady()) {
-                onSceneReady(scene)
-            } else {
-                scene.onReadyObservable.addOnce((scene) => onSceneReady(scene))
+            if (onSceneReady) {
+                if (scene.isReady()) {
+                    onSceneReady(scene)
+                } else {
+                    scene.onReadyObservable.addOnce((scene) => onSceneReady(scene))
+                }
             }
-
-            engine.runRenderLoop(() => {
-                onRender(scene)
-                scene.render()
-            })
+            if (onRender) {
+                engine.runRenderLoop(() => {
+                    onRender(scene)
+                    scene.render()
+                })
+            } else {
+                engine.runRenderLoop(() => {
+                    scene.render()
+                })
+            }
         }
 
         return () => {
