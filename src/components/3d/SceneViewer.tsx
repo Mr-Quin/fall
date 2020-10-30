@@ -9,6 +9,7 @@ import {
     Color4,
     Engine,
     ExecuteCodeAction,
+    FxaaPostProcess,
     LensRenderingPipeline,
     Mesh,
     PhysicsImpostor,
@@ -68,9 +69,9 @@ const onSceneReady = async (scene: Scene) => {
 
     scene!.autoClear = false // Color buffer
     scene!.autoClearDepthAndStencil = false // Depth and stencil, obviously
+    scene.clearColor = Color4.FromHexString(clearColor)
     createLight()
     createGlow()
-    scene.clearColor = Color4.FromHexString(clearColor)
 
     // debugging
     if (process.env.NODE_ENV === 'development') {
@@ -87,13 +88,15 @@ const onSceneReady = async (scene: Scene) => {
     const lensParams = {
         edge_blur: 0.5,
         chromatic_aberration: 0.5,
-        distortion: 0.3,
-        grain_amount: 1,
+        distortion: 0.5,
+        grain_amount: 0.2,
         dof_focus_distance: 1,
         dof_aperture: 0.8,
         dof_pentagon: true,
     }
     const lensEffect = new LensRenderingPipeline('lensEffects', lensParams, scene, 1.0, [camera])
+    const fxaa = new FxaaPostProcess('fxaa', 1.0, camera)
+    fxaa.autoClear = false
 
     // load star
     const {
@@ -164,10 +167,15 @@ const onSceneReady = async (scene: Scene) => {
     ambientPsEmitter.isVisible = false
 
     //goal and light follow star
-    scene.onBeforeRenderObservable.add(() => {
+    const mainSceneObserver = scene.onBeforeRenderObservable.add(() => {
         cameraGoal.position = Vector3.Lerp(cameraGoal.position, starMesh.position, 0.1)
         starLight.position = starMesh.position
         collider.position.set(starMesh.position.x, colliderYTarget, starMesh.position.z)
+        scene.clearColor = Color4.Lerp(
+            scene.clearColor,
+            useStore.getState().mutations.colorTarget,
+            0.003
+        )
     })
 
     const titleCameraObserver = scene.onBeforeRenderObservable.add(() => {
@@ -285,14 +293,14 @@ const onSceneReady = async (scene: Scene) => {
 }
 
 const SceneViewer = (props) => {
-    const onRender = useCallback((scene) => void 0, [])
+    // const onRender = useCallback((scene) => void 0, [])
 
     return (
         <>
             <BabylonScene
                 antialias
                 onSceneReady={onSceneReady}
-                onRender={onRender}
+                // onRender={onRender}
                 // engineOptions={{
                 //     deterministicLockstep: true,
                 //     lockstepMaxSteps: 4,
