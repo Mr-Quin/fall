@@ -1,26 +1,42 @@
-export const randomFromArray = (arr: any[]): any => {
-    return arr[(Math.random() * arr.length) << 0]
-}
-
-export const randomRange = (min: number, max: number, asInt?: boolean): number => {
-    const num = Math.random() * (max - min) + min
-    return asInt ? num << 0 : num
-}
-
-export const mapValue: (...args: any[]) => number = (value, low1, high1, low2, high2) => {
-    if (value > high1) {
-        return high2
+/**
+ *
+ * @param array     The array to pick from
+ * @param compare   Optional comparison function. The array will be filtered using this function and a random element will be returned from the filtered array.
+ * @returns         A random element from the array.
+ */
+export const randomFromArray = <T>(array: T[], compare?: (element: T) => boolean): T => {
+    if (compare !== undefined) {
+        array = array.filter(compare)
     }
+
+    if (!array.length)
+        throw new Error('Array is empty or comparison function returns an empty array.')
+
+    return array[(Math.random() * array.length) << 0]
+}
+
+export const randomRange = (min: number, max: number, floor?: boolean): number => {
+    const num = Math.random() * (max - min) + min
+    return floor ? num << 0 : num
+}
+
+export const mapValue = (
+    value: number,
+    low1: number,
+    high1: number,
+    low2: number,
+    high2: number
+): number => {
     return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1)
 }
 
-export const chunk = (array: any[], size: number): any[] => {
-    let index: number = 0
-    const arrayLength: number = array.length
-    const tempArray: any[] = []
+export const chunk = <T>(array: T[], size: number): T[][] => {
+    let i = 0
+    const arrayLength = array.length
+    const tempArray: T[][] = []
 
-    for (index = 0; index < arrayLength; index += size) {
-        const chunk = array.slice(index, index + size)
+    for (i = 0; i < arrayLength; i += size) {
+        const chunk = array.slice(i, i + size)
         tempArray.push(chunk)
     }
 
@@ -28,17 +44,15 @@ export const chunk = (array: any[], size: number): any[] => {
 }
 
 export const clamp = (x: number, min: number, max: number): number => {
-    if (x < min) {
-        return min
-    } else if (x > max) {
-        return max
-    } else return x
+    // supposed if else statement is faster?
+    const d = x < min ? min : x
+    return d > max ? max : d
 }
 
 export const lerp = (v0: number, v1: number, t: number): number => {
     return v0 * (1 - t) + v1 * t
 }
 
-export const normalize = (val, max, min) => {
+export const normalize = (val: number, max: number, min: number): number => {
     return (val - min) / (max - min)
 }

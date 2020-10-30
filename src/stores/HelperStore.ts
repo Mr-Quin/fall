@@ -28,6 +28,7 @@ import {
     Vector3,
     Animation,
     Node,
+    SceneInstrumentation,
 } from '@babylonjs/core'
 
 // pull from other store, subscribe to changes
@@ -47,6 +48,7 @@ type ChainOptions = {
 type HelperState = {
     addActions: (actionManager: ActionManager, actions: IAction | IAction[]) => ActionManager
     createAmbientParticleSystem: (texture: Texture) => GPUParticleSystem
+    createTrailParticleSystem: (texture: Texture) => GPUParticleSystem
     createBlinkAnimation: (orig: any) => Animation
     createCamera: () => Camera
     createChain: (
@@ -129,6 +131,46 @@ const useHelperStore = create<HelperState>((set, get) => ({
         gpuParticleSystem.addSizeGradient(0.3, 0.02)
         gpuParticleSystem.addSizeGradient(0.7, 0.15)
         gpuParticleSystem.addSizeGradient(1, 0.02)
+
+        gpuParticleSystem.maxEmitPower = 0
+        gpuParticleSystem.minEmitPower = 0
+
+        return gpuParticleSystem
+    },
+
+    createTrailParticleSystem: (texture) => {
+        const gpuParticleSystem = new GPUParticleSystem(
+            'trail-particles',
+            { capacity: 50, randomTextureSize: 1024 },
+            scene!
+        )
+        const noiseTexture = new NoiseProceduralTexture('perlin', 256, scene)
+        noiseTexture.animationSpeedFactor = 2
+        noiseTexture.brightness = 0.5
+        noiseTexture.octaves = 5
+        gpuParticleSystem.noiseTexture = noiseTexture
+
+        gpuParticleSystem.noiseStrength = new Vector3(1, 1, 1)
+        gpuParticleSystem.emitRate = 5
+        gpuParticleSystem.minLifeTime = 0.2
+        gpuParticleSystem.maxLifeTime = 0.4
+        gpuParticleSystem.createPointEmitter(Vector3.Zero(), Vector3.Zero())
+        gpuParticleSystem.particleTexture = texture
+        gpuParticleSystem.updateSpeed = 1 / 100
+        gpuParticleSystem.maxInitialRotation = Math.PI
+        gpuParticleSystem.maxInitialRotation = -Math.PI
+
+        gpuParticleSystem.addColorGradient(0, new Color4(0, 0, 0, 0))
+        gpuParticleSystem.addColorGradient(
+            0.05,
+            new Color4(0.4, 0.3, 0.8, 1),
+            new Color4(0.2, 0.9, 0.8, 1)
+        )
+        gpuParticleSystem.addColorGradient(0.8, new Color4(0.8, 0.3, 0.2, 1))
+        gpuParticleSystem.addColorGradient(1, new Color4(0, 0, 0, 0))
+
+        gpuParticleSystem.addSizeGradient(0, 0.8)
+        gpuParticleSystem.addSizeGradient(1, 0)
 
         gpuParticleSystem.maxEmitPower = 0
         gpuParticleSystem.minEmitPower = 0
@@ -419,12 +461,14 @@ const useHelperStore = create<HelperState>((set, get) => ({
         const advancedTexture = BABYLONGUI.AdvancedDynamicTexture.CreateFullscreenUI('UI')
         const stackPanel = new BABYLONGUI.StackPanel()
         stackPanel.verticalAlignment = BABYLONGUI.Control.VERTICAL_ALIGNMENT_TOP
+        stackPanel.topInPixels = 30
         stackPanel.isVertical = true
         advancedTexture.addControl(stackPanel)
         const frameTime = new BABYLONGUI.TextBlock()
         const averageFrameTime = new BABYLONGUI.TextBlock()
         const shaderTime = new BABYLONGUI.TextBlock()
         const shaderCount = new BABYLONGUI.TextBlock()
+        const physicsTime = new BABYLONGUI.TextBlock()
         const fps = new BABYLONGUI.TextBlock()
 
         const applyTextStyles = (textBlocks) =>
@@ -436,25 +480,30 @@ const useHelperStore = create<HelperState>((set, get) => ({
                 stackPanel.addControl(textBlock)
             })
 
-        applyTextStyles([frameTime, averageFrameTime, shaderTime, shaderCount, fps])
+        applyTextStyles([frameTime, averageFrameTime, shaderTime, shaderCount, physicsTime, fps])
 
         const engine = scene!.getEngine()
-        const instrumentation = new EngineInstrumentation(engine)
+        const engineInstrumentation = new EngineInstrumentation(engine)
+        const sceneInstrumentation = new SceneInstrumentation(scene!)
 
-        instrumentation.captureGPUFrameTime = true
-        instrumentation.captureShaderCompilationTime = true
+        engineInstrumentation.captureGPUFrameTime = true
+        engineInstrumentation.captureShaderCompilationTime = true
+        sceneInstrumentation.capturePhysicsTime = true
 
         scene!.registerBeforeRender(() => {
             frameTime.text = `Current frame time (GPU): ${(
-                instrumentation.gpuFrameTimeCounter.current * 0.000001
+                engineInstrumentation.gpuFrameTimeCounter.current * 0.000001
             ).toFixed(2)} ms`
             averageFrameTime.text = `Average frame time (GPU): ${(
-                instrumentation.gpuFrameTimeCounter.average * 0.000001
+                engineInstrumentation.gpuFrameTimeCounter.average * 0.000001
             ).toFixed(2)} ms`
-            shaderTime.text = `Total shader compilation time: ${instrumentation.shaderCompilationTimeCounter.total.toFixed(
+            shaderTime.text = `Total shader compilation time: ${engineInstrumentation.shaderCompilationTimeCounter.total.toFixed(
                 2
             )} ms`
-            shaderCount.text = `Compiler shaders count: ${instrumentation.shaderCompilationTimeCounter.count}`
+            shaderCount.text = `Compiler shaders count: ${engineInstrumentation.shaderCompilationTimeCounter.count}`
+            physicsTime.text = `Current physics time: ${sceneInstrumentation.physicsTimeCounter.current.toFixed(
+                2
+            )} ms`
             fps.text = `FPS: ${engine.getFps().toFixed()}`
         })
     },

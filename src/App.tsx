@@ -5,9 +5,10 @@ import Mood from './components/Mood'
 import useStore from './stores/store'
 import Footer from './components/Footer'
 import LoadingScreen from './components/LoadingScreen'
-import withFade from './components/hoc/withFade'
+import withFade from './styles/withFade'
 import useToggle from './hooks/useToggle'
 import { FullScreen } from './styles'
+import { logArt } from './config/scene-config'
 
 const LoadingBg = withFade(FullScreen)
 const TitleWrapper = withFade(FullScreen)
@@ -15,9 +16,12 @@ const TitleWrapper = withFade(FullScreen)
 const selector = (state) => [state.sceneReady, state.animationFinished, state.fallen]
 const background = useStore.getState().defaults.backgroundColor
 
+const devEnv = process.env.NODE_ENV === 'development'
 const App = () => {
     const [sceneReady, animationFinished, fallen] = useStore(selector)
     const [renderLoadingScreen, toggleRenderLoadingScreen] = useToggle(true)
+
+    useEffect(logArt, [])
 
     useEffect(() => {
         if (!fallen) return
@@ -28,12 +32,13 @@ const App = () => {
     return (
         <FullScreen background={background}>
             {renderLoadingScreen && (
-                <TitleWrapper show={!fallen} transition>
+                <TitleWrapper show={!fallen} transition passPointer>
                     <LoadingBg
                         show={!animationFinished}
                         background={background}
                         transition
                         duration={'3s'}
+                        passPointer
                     />
                     <LoadingScreen show={!sceneReady} />
                     {sceneReady && <TitleScreen show={sceneReady} />}
@@ -41,7 +46,7 @@ const App = () => {
             )}
             {fallen && <Mood />}
             <SceneViewer />
-            {process.env.NODE_ENV === 'development' ? <Footer>Development Build</Footer> : null}
+            {devEnv ? <Footer>Development Build</Footer> : null}
         </FullScreen>
     )
 }
