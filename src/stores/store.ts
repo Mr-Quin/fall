@@ -18,8 +18,10 @@ type StoreState = {
     }
     mutations: {
         steps: AbstractMesh[]
+        bounces: number
         chord: Nullable<Chord>
         player: Nullable<Player>
+        previousNote: Nullable<string>
     }
     actions: {
         init: (
@@ -46,8 +48,10 @@ const useStore = create<StoreState>((set, get) => ({
     },
     mutations: {
         steps: [],
+        bounces: 0,
         chord: null,
         player: null,
+        previousNote: null,
     },
     actions: {
         init: async (scene, canvas, camera) => {
@@ -57,11 +61,12 @@ const useStore = create<StoreState>((set, get) => ({
         fall: null,
         playTone: () => {
             const notes = get().mutations.chord!.notes
-            const note = randomFromArray(notes)
+            const note = randomFromArray(notes, get().mutations.previousNote as string)
             let octave = randomRange(6, 7, true)
             if (note === 'A' || note === 'B') octave -= 1
             const player = get().mutations.player
             player && player.play(`${note}${octave}`)
+            set(({ mutations }) => void (mutations.previousNote = note) as any)
         },
     },
 }))
