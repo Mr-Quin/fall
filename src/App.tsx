@@ -5,7 +5,7 @@ import Mood from './components/Mood'
 import useStore from './stores/store'
 import Footer from './components/Footer'
 import LoadingScreen from './components/LoadingScreen'
-import withFade from './components/hoc/withFade'
+import withFade from './styles/withFade'
 import useToggle from './hooks/useToggle'
 import { FullScreen } from './styles'
 import { logArt } from './config/scene-config'
@@ -31,12 +31,13 @@ const App = () => {
     return (
         <FullScreen background={background}>
             {renderLoadingScreen && (
-                <TitleWrapper show={!fallen} transition>
+                <TitleWrapper show={!fallen} transition passPointer>
                     <LoadingBg
                         show={!animationFinished}
                         background={background}
                         transition
                         duration={'3s'}
+                        passPointer
                     />
                     <LoadingScreen show={!sceneReady} />
                     {sceneReady && <TitleScreen show={sceneReady} />}
