@@ -1,8 +1,9 @@
 import create from 'zustand'
-import { AbstractMesh, Camera, Nullable, Scene } from '@babylonjs/core'
+import { AbstractMesh, Camera, Color4, Nullable, Scene } from '@babylonjs/core'
 import { randomFromArray, randomRange } from '../utils/utils'
 import { Chord } from '@tonaljs/chord'
 import { Player } from 'soundfont-player'
+import { colors } from '../config/scene-config'
 
 type StoreState = {
     sceneReady: boolean
@@ -19,6 +20,7 @@ type StoreState = {
     mutations: {
         steps: AbstractMesh[]
         bounces: number
+        colorTarget: Color4
         chord: Nullable<Chord>
         player: Nullable<Player>
         previousNote: Nullable<string>
@@ -49,6 +51,7 @@ const useStore = create<StoreState>((set, get) => ({
     mutations: {
         steps: [],
         bounces: 0,
+        colorTarget: Color4.FromHexString(colors.backgroundColor),
         chord: null,
         player: null,
         previousNote: null,
@@ -61,12 +64,21 @@ const useStore = create<StoreState>((set, get) => ({
         fall: null,
         playTone: () => {
             const notes = get().mutations.chord!.notes
-            const note = randomFromArray(notes, get().mutations.previousNote as string)
+            const note = randomFromArray(notes, (note) => note !== get().mutations.previousNote)
             let octave = randomRange(6, 7, true)
             if (note === 'A' || note === 'B') octave -= 1
             const player = get().mutations.player
             player && player.play(`${note}${octave}`)
             set(({ mutations }) => void (mutations.previousNote = note) as any)
+            set(
+                ({ mutations }) =>
+                    void (mutations.colorTarget = new Color4(
+                        randomRange(0, 0.2),
+                        randomRange(0, 0.2),
+                        randomRange(0, 0.2),
+                        1
+                    )) as any
+            )
         },
     },
 }))
