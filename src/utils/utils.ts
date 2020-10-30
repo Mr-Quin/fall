@@ -47,6 +47,7 @@ export const chunk = <T>(array: T[], size: number): T[][] => {
 }
 
 export const clamp = (x: number, min: number, max: number): number => {
+    // supposed if else statement is faster?
     const d = x < min ? min : x
     return d > max ? max : d
 }
