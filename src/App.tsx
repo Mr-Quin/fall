@@ -16,6 +16,7 @@ const TitleWrapper = withFade(FullScreen)
 const selector = (state) => [state.sceneReady, state.animationFinished, state.fallen]
 const background = useStore.getState().defaults.backgroundColor
 
+const devEnv = process.env.NODE_ENV === 'development'
 const App = () => {
     const [sceneReady, animationFinished, fallen] = useStore(selector)
     const [renderLoadingScreen, toggleRenderLoadingScreen] = useToggle(true)
@@ -45,7 +46,7 @@ const App = () => {
             )}
             {fallen && <Mood />}
             <SceneViewer />
-            {process.env.NODE_ENV === 'development' ? <Footer>Development Build</Footer> : null}
+            {devEnv ? <Footer>Development Build</Footer> : null}
         </FullScreen>
     )
 }
