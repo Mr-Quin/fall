@@ -19,12 +19,18 @@ export const randomFromArray = <T>(array: T[], compare?: T): T => {
     return array[(Math.random() * array.length) << 0]
 }
 
-export const randomRange = (min: number, max: number, asInt?: boolean): number => {
+export const randomRange = (min: number, max: number, floor?: boolean): number => {
     const num = Math.random() * (max - min) + min
-    return asInt ? num << 0 : num
+    return floor ? num << 0 : num
 }
 
-export const mapValue: (...args: any[]) => number = (value, low1, high1, low2, high2) => {
+export const mapValue = (
+    value: number,
+    low1: number,
+    high1: number,
+    low2: number,
+    high2: number
+): number => {
     if (value > high1) {
         return high2
     }
