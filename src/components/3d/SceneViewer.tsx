@@ -14,6 +14,7 @@ import {
     PhysicsImpostor,
     PointLight,
     Scalar,
+    Scene,
     SceneLoader,
     Texture,
     TransformNode,
@@ -30,7 +31,8 @@ import useHelperStore from '../../stores/HelperStore'
 
 // star is loaded by file-loader as configured in config-overrides.js
 import { flare, star, starGlb, starRound } from '../../assets'
-import { randomRange } from '../../utils/utils'
+import { mapValue, randomRange } from '../../utils/utils'
+import { sceneConfig, colors } from '../../config/scene-config'
 
 const BabylonScene = styled(SceneComponent)`
     width: 100vw;
@@ -50,13 +52,15 @@ const {
     createBlinkAnimation,
     createCollisionParticleSystem,
     createAmbientParticleSystem,
+    createTrailParticleSystem,
     createStarField,
     setPhysicsImposter,
     enableDebugMetrics,
     toggleOverlay,
 } = useHelperStore.getState()
+const { HALF_PI, TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA } = sceneConfig
 
-const onSceneReady = async (scene) => {
+const onSceneReady = async (scene: Scene) => {
     scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false))
     const canvas = scene.getEngine().getRenderingCanvas()
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
@@ -66,7 +70,7 @@ const onSceneReady = async (scene) => {
     scene!.autoClearDepthAndStencil = false // Depth and stencil, obviously
     createLight()
     createGlow()
-    scene.clearColor = Color3.FromHexString(clearColor)
+    scene.clearColor = Color4.FromHexString(clearColor)
 
     // debugging
     if (process.env.NODE_ENV === 'development') {
@@ -75,7 +79,7 @@ const onSceneReady = async (scene) => {
     }
 
     // camera
-    camera.attachControl(canvas, true)
+    camera.attachControl(canvas as HTMLCanvasElement, true)
     camera.fov = 0.6
     camera.lowerRadiusLimit = 10
     camera.target = new Vector3(0, 35, 0)
@@ -156,17 +160,25 @@ const onSceneReady = async (scene) => {
 
     // particle field following star
     const ambientPsEmitter = Mesh.CreateBox('particle-field', 1, scene).convertToUnIndexedMesh()
+    ambientPsEmitter.parent = cameraGoal
     ambientPsEmitter.isVisible = false
 
     //goal and light follow star
     scene.onBeforeRenderObservable.add(() => {
-        ambientPsEmitter.position = cameraGoal.position = Vector3.Lerp(
-            cameraGoal.position,
-            starMesh.position,
-            0.1
-        )
+        cameraGoal.position = Vector3.Lerp(cameraGoal.position, starMesh.position, 0.1)
         starLight.position = starMesh.position
         collider.position.set(starMesh.position.x, colliderYTarget, starMesh.position.z)
+    })
+
+    const titleCameraObserver = scene.onBeforeRenderObservable.add(() => {
+        const normalizedPointerX = scene.pointerX / window.innerWidth
+        const normalizedPointerY = scene.pointerY / window.innerHeight
+        const alphaTarget =
+            HALF_PI + mapValue(normalizedPointerX, 0, 1, -TITLE_CAMERA_ALPHA, TITLE_CAMERA_ALPHA)
+        const betaTarget =
+            HALF_PI + mapValue(normalizedPointerY, 0, 1, -TITLE_CAMERA_BETA, TITLE_CAMERA_BETA)
+        camera.alpha = Scalar.Lerp(camera.alpha, alphaTarget, 0.01)
+        camera.beta = Scalar.Lerp(camera.beta, betaTarget, 0.01)
     })
 
     // particle systems
@@ -203,19 +215,18 @@ const onSceneReady = async (scene) => {
     // animations
     const starLightAnimation = createBlinkAnimation(0.2)
 
-    let bounces = 0
     const step = Mesh.CreateBox('step-box', 3, scene).convertToUnIndexedMesh()
     step.scaling.set(1, 1 / 5, 1)
     step.isVisible = false
 
     const createStep = () => {
+        const bounces = useStore.getState().mutations.bounces
         return step.createInstance(`step-box-clone-${bounces.toString()}`)
     }
 
     // actions
     const onCollision = () => {
         console.log('bounce')
-        bounces += 1
         scene.beginDirectAnimation(starLight, [starLightAnimation], 0, 10)
         collisionPs.manualEmitCount = randomRange(3, 5, true)
         playTone()
@@ -223,6 +234,7 @@ const onSceneReady = async (scene) => {
 
         const step = createStep()
         step.position.set(starMesh.position.x, starMesh.position.y - 3 / 5, starMesh.position.z)
+        useStore.setState(({ mutations }) => void (mutations.bounces += 1) as any)
     }
     starMesh.actionManager = new ActionManager(scene)
     starMesh.actionManager.registerAction(
@@ -247,6 +259,7 @@ const onSceneReady = async (scene) => {
         collisionPs.manualEmitCount = randomRange(4, 8, true)
         ambientPs.start()
 
+        scene.onBeforeRenderObservable.remove(titleCameraObserver)
         const apertureObserver = scene.onBeforeRenderObservable.add(() => {
             const { dof_aperture } = lensParams
             lensParams.dof_aperture = Scalar.Lerp(dof_aperture, 0.08, 0.03)
@@ -267,7 +280,7 @@ const onSceneReady = async (scene) => {
     }
 
     useStore.setState({ sceneReady: true })
-    useStore.setState(({ actions }) => (actions.fall = fall) as any)
+    useStore.setState(({ actions }) => void (actions.fall = fall) as any)
     console.info('Scene is ready')
 }
 
