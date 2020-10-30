@@ -1,21 +1,17 @@
 /**
  *
  * @param array     The array to pick from
- * @param compare   Optional comparison value. The return value will be different from this value.
- *                  If no element in the array has a different value, an error will be thrown.
+ * @param compare   Optional comparison function. The array will be filtered using this function and a random element will be returned from the filtered array.
  * @returns         A random element from the array.
  */
-export const randomFromArray = <T>(array: T[], compare?: T): T => {
+export const randomFromArray = <T>(array: T[], compare?: (element: T) => boolean): T => {
     if (compare !== undefined) {
-        if (!array.some((elt) => elt !== compare))
-            throw new Error('Array does not contain elements that differs from compare')
-
-        let value = array[(Math.random() * array.length) << 0]
-        while (Object.is(value, compare)) {
-            value = array[(Math.random() * array.length) << 0]
-        }
-        return value
+        array = array.filter(compare)
     }
+
+    if (!array.length)
+        throw new Error('Array is empty or comparison function returns an empty array.')
+
     return array[(Math.random() * array.length) << 0]
 }
 
