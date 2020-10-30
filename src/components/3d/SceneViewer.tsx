@@ -80,7 +80,6 @@ const onSceneReady = async (scene: Scene) => {
     }
 
     // camera
-    camera.attachControl(canvas as HTMLCanvasElement, true)
     camera.fov = 0.6
     camera.lowerRadiusLimit = 10
     camera.target = new Vector3(0, 35, 0)
@@ -266,6 +265,8 @@ const onSceneReady = async (scene: Scene) => {
         chains.forEach((link) => link.dispose())
         collisionPs.manualEmitCount = randomRange(4, 8, true)
         ambientPs.start()
+        // attach camera control only after the fall button is clicked
+        camera.attachControl(canvas as HTMLCanvasElement, true)
 
         scene.onBeforeRenderObservable.remove(titleCameraObserver)
         const apertureObserver = scene.onBeforeRenderObservable.add(() => {
