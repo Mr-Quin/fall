@@ -62,7 +62,7 @@ const TitleScreen = (props) => {
                         )
                     })}
                 </svg>
-            </HoverDiv>
+            </HoverButton>
         </FullScreen>
     )
 }
