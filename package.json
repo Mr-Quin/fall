@@ -37,7 +37,13 @@
     "start": "react-app-rewired start",
     "build": "set \"GENERATE_SOURCEMAP=false\" && react-app-rewired build",
     "test": "react-app-rewired test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "jest-test": "react-scripts test"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "/!node_modules\\/@babylonjs/"
+    ]
   },
   "eslintConfig": {
     "extends": "react-app"
