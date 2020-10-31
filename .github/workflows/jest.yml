@@ -1,7 +1,5 @@
 name: Jest tests
 on:
-  push:
-    branches-ignore: []
   pull_request:
     branches: [ master ]
 
