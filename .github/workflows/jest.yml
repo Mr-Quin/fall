@@ -1,0 +1,17 @@
+name: Jest tests
+on:
+  push:
+    branches-ignore: []
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install
+      run: npm i
+    - name: Run jest test
+      run: npm run jest-test
