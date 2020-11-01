@@ -12,8 +12,46 @@ interface SceneProps
     engineOptions?: EngineOptions
     sceneOptions?: SceneOptions
     adaptToDeviceRatio?: boolean
-    onSceneReady?: (scene: Scene) => void
+    onSceneReady?: (scene: Scene) => Promise<any>
     onRender?: (scene: Scene) => void
+}
+
+export const initScene = async (
+    canvas: HTMLCanvasElement,
+    props: SceneProps
+): Promise<[Engine, Scene]> => {
+    const {
+        antialias,
+        engineOptions,
+        adaptToDeviceRatio,
+        sceneOptions,
+        onRender,
+        onSceneReady,
+    } = props
+
+    const engine = new Engine(canvas, antialias, engineOptions, adaptToDeviceRatio)
+    const scene = new Scene(engine, sceneOptions)
+
+    const promise = new Promise<[Engine, Scene]>(async (resolve) => {
+        if (onSceneReady) {
+            if (scene.isReady()) {
+                await onSceneReady(scene)
+                resolve([engine, scene])
+            } else {
+                scene.onReadyObservable.addOnce(async (scene) => {
+                    await onSceneReady(scene)
+                    resolve([engine, scene])
+                })
+            }
+        }
+    })
+
+    engine.runRenderLoop(() => {
+        engine.resize()
+        scene.render() // scene always has camera in this case
+    })
+
+    return promise
 }
 
 const SceneComponent = (props: SceneProps) => {
@@ -33,43 +71,11 @@ const SceneComponent = (props: SceneProps) => {
     const [scene, setScene] = useState<Scene>()
 
     useEffect(() => {
-        if (window) {
-            const resize = () => {
-                if (scene) {
-                    scene.getEngine().resize()
-                }
-            }
-            window.addEventListener('resize', resize)
-
-            return () => {
-                window.removeEventListener('resize', resize)
-            }
-        }
-    }, [scene])
-
-    useEffect(() => {
         if (!loaded) {
-            setLoaded(true)
-            const engine = new Engine(canvas.current, antialias, engineOptions, adaptToDeviceRatio)
-            const scene = new Scene(engine, sceneOptions)
-            setScene(scene)
-            if (onSceneReady) {
-                if (scene.isReady()) {
-                    onSceneReady(scene)
-                } else {
-                    scene.onReadyObservable.addOnce((scene) => onSceneReady(scene))
-                }
-            }
-            if (onRender) {
-                engine.runRenderLoop(() => {
-                    onRender(scene)
-                    scene.render()
-                })
-            } else {
-                engine.runRenderLoop(() => {
-                    scene.render()
-                })
-            }
+            initScene(canvas.current, props).then(([, scene]) => {
+                setScene(scene)
+                setLoaded(true)
+            })
         }
 
         return () => {
@@ -77,7 +83,7 @@ const SceneComponent = (props: SceneProps) => {
                 scene!.dispose()
             }
         }
-    }, [canvas])
+    }, [])
 
     return <canvas ref={canvas} {...rest} />
 }
