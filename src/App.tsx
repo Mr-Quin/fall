@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import TitleScreen from './components/TitleScreen'
-import SceneViewer from './components/3d/SceneViewer'
 import Mood from './components/Mood'
 import useStore from './stores/store'
 import Footer from './components/Footer'
@@ -42,11 +41,10 @@ const App = () => {
                         passPointer
                     />
                     <LoadingScreen show={!sceneReady} />
-                    {sceneReady && <TitleScreen show={sceneReady} />}
+                    {sceneReady && <TitleScreen show />}
                 </TitleWrapper>
             )}
             {fallen && <Mood />}
-            <SceneViewer />
             <React.Suspense fallback={null}>
                 <LazyBabylonScene />
             </React.Suspense>
