@@ -6,12 +6,20 @@ name: Deploy to Firebase Hosting on PR
 jobs:
   build_and_preview:
     runs-on: ubuntu-latest
-    env:
-      CI: false
-      GENERATE_SOURCEMAP: false
+    
     steps:
-      - uses: actions/checkout@v2
-      - run:  npm run build
+      - name: Checkout 
+        uses: actions/checkout@v2
+
+      - name: Install and Build
+        env:
+          GENERATE_SOURCEMAP: false
+          CI: false
+        run: |
+          npm install
+          npm run build
+          
+      - name: Deploy 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
@@ -19,3 +27,4 @@ jobs:
           projectId: fall-8eaf0
         env:
           FIREBASE_CLI_PREVIEWS: hostingchannels
+          
