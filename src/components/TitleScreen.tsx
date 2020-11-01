@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react'
 import useStore from '../stores/store'
 import AnimatedPath from './AnimatedPath'
 import { FullScreen, HoverButton } from '../styles'
-import { sceneConfig } from '../config/scene-config'
+import { constants } from '../config/scene-config'
 
 const {
     TITLE_ANIMATION_DELAY,
@@ -11,7 +11,7 @@ const {
     TITLE_FILL_COLOR,
     TITLE_STROKE_COLOR,
     TITLE_STROKE_WIDTH,
-} = sceneConfig
+} = constants
 
 const selector = (state) => [state.actions.fall, state.animationFinished]
 const setAnimationFinished = () => void useStore.setState({ animationFinished: true })
