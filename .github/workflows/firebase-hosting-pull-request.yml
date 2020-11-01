@@ -16,6 +16,7 @@ jobs:
           echo REACT_APP_COMMIT_HASH=${{ github.sha }} >> ./.env.production
           echo REACT_APP_BUILD_NUMBER=${{ github.run_number }} >> ./.env.production
           echo REACT_APP_FIREBASE_API_KEY=${{ secrets.REACT_APP_FIREBASE_API_KEY }} >> ./.env.production
+          echo REACT_APP_FIREBASE_APP_ID=${{ secrets.REACT_APP_FIREBASE_APP_ID }} >> ./.env.production
           echo REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }} >> ./.env.production
           echo REACT_APP_FIRE_BASE_MEASUREMENT_ID=${{ secrets.REACT_APP_FIRE_BASE_MEASUREMENT_ID }} >> ./.env.production
 
