@@ -4,7 +4,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  Run tests:
     runs-on: ubuntu-latest
     
     steps:
