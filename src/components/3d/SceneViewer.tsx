@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import styled from 'styled-components'
 
 import {
@@ -22,6 +22,7 @@ import {
     Vector3,
 } from '@babylonjs/core'
 import '@babylonjs/loaders/glTF'
+import * as CANNON from 'cannon'
 
 import { start as toneStart } from 'tone'
 
@@ -62,7 +63,7 @@ const {
 const { HALF_PI, TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA } = sceneConfig
 
 const onSceneReady = async (scene: Scene) => {
-    scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false))
+    scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false, 10, CANNON))
     const canvas = scene.getEngine().getRenderingCanvas()
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
     await init(scene, canvas, camera)
