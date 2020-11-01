@@ -35,7 +35,7 @@ const titlePath = [
     'M235.3,90.29v7.15H193l3.81-3.58h34.87Zm-34.73,0-3.81,3.57V35.14l3.81-3.58Z',
 ]
 
-export const sceneConfig = {
+export const constants = {
     HALF_PI: Math.PI / 2,
     TITLE_CAMERA_ALPHA: 0.6,
     TITLE_CAMERA_BETA: 0.4,
@@ -46,6 +46,9 @@ export const sceneConfig = {
     TITLE_STROKE_COLOR: '#fff',
     TITLE_FILL_COLOR: '#fff',
     TITLE_STROKE_WIDTH: 1,
+    LOWEST_PIANO_MIDI_NUMBER: 21, // A0
+    LOWEST_INSTRUMENT_MIDI_NUMBER: 81, // A5
+    GENIE_TEMPERATURE: 0.25,
 }
 
 export const colors = {
