@@ -27,13 +27,14 @@ type StoreState = {
         player: Nullable<Player>
     }
     actions: {
-        init: (
+        initScene: (
             scene: Nullable<Scene>,
             canvas: Nullable<HTMLCanvasElement>,
             camera: Nullable<Camera>
-        ) => Promise<void>
+        ) => void
         fall: Nullable<() => void>
         playTone: () => void
+        randomizeColor: () => void
     }
 }
 
@@ -76,6 +77,7 @@ const useStore = create<StoreState>((set, get) => ({
             player.play(fromMidi(validNote))
             get().actions.randomizeColor()
         },
+        randomizeColor: () => {
             set(
                 ({ mutations }) =>
                     void (mutations.colorTarget = new Color4(
