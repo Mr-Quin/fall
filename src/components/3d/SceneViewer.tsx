@@ -295,6 +295,7 @@ const onSceneReady = async (scene: Scene) => {
     useStore.setState({ sceneReady: true })
     useStore.setState(({ actions }) => void (actions.fall = fall) as any)
     console.info('Scene is ready')
+    return Promise.resolve(scene)
 }
 
 const SceneViewer = (props) => {
