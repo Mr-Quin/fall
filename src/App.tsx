@@ -12,6 +12,7 @@ import { logArt } from './config/scene-config'
 
 const LoadingBg = withFade(FullScreen)
 const TitleWrapper = withFade(FullScreen)
+const LazyBabylonScene = React.lazy(() => import('./components/3d/SceneViewer'))
 
 const selector = (state) => [state.sceneReady, state.animationFinished, state.fallen]
 const background = useStore.getState().defaults.backgroundColor
@@ -46,6 +47,9 @@ const App = () => {
             )}
             {fallen && <Mood />}
             <SceneViewer />
+            <React.Suspense fallback={null}>
+                <LazyBabylonScene />
+            </React.Suspense>
             {devEnv ? <Footer>Development Build</Footer> : null}
         </FullScreen>
     )
