@@ -18,10 +18,10 @@ const StyledPath = styled.path`
     stroke-dashoffset: ${(props) => props.length};
     fill-opacity: ${(props) => (props.animateFill ? 0 : 1)};
     animation-name: ${strokeAnim}, ${fillAnim};
-    animation-duration: ${(props) => props.animationDuration || '1s'};
-    animation-fill-mode: ${(props) => props.animationFillMode || 'forwards'};
-    animation-delay: ${(props) => props.animationDelay || '0, 1s'};
-    animation-timing-function: ${(props) => props.animationTimingFunction || 'linear'};
+    animation-duration: ${(props) => props.animationDuration ?? '1s'};
+    animation-fill-mode: ${(props) => props.animationFillMode ?? 'forwards'};
+    animation-delay: ${(props) => props.animationDelay ?? '0, 1s'};
+    animation-timing-function: ${(props) => props.animationTimingFunction ?? 'linear'};
 `
 
 interface Props extends Partial<React.SVGProps<SVGPathElement>> {
