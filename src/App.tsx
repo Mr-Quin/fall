@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, Suspense } from 'react'
 import TitleScreen from './components/TitleScreen'
-import Mood from './components/Mood'
+import Genie from './components/Genie'
 import useStore from './stores/store'
 import Footer from './components/Footer'
 import LoadingScreen from './components/LoadingScreen'
@@ -50,10 +50,11 @@ const App = () => {
                     {sceneReady && <TitleScreen show />}
                 </TitleWrapper>
             )}
-            {fallen && <Mood />}
-            <React.Suspense fallback={null}>
-                <LazyBabylonScene />
-            </React.Suspense>
+            <Suspense fallback={null}>
+                <LazyBabylonScene>
+                    <Genie />
+                </LazyBabylonScene>
+            </Suspense>
             {devEnv ? <Footer>Development Build</Footer> : null}
         </FullScreen>
     )
