@@ -8,9 +8,11 @@ import withFade from './styles/withFade'
 import useToggle from './hooks/useToggle'
 import { FullScreen } from './styles'
 import { logArt } from './config/scene-config'
+import useFirebase from './hooks/useFirebase'
 
 const LoadingBg = withFade(FullScreen)
 const TitleWrapper = withFade(FullScreen)
+
 const LazyBabylonScene = React.lazy(() => import('./components/3d/SceneViewer'))
 
 const selector = (state) => [state.sceneReady, state.animationFinished, state.fallen]
@@ -21,7 +23,11 @@ const App = () => {
     const [sceneReady, animationFinished, fallen] = useStore(selector)
     const [renderLoadingScreen, toggleRenderLoadingScreen] = useToggle(true)
 
-    useEffect(logArt, [])
+    useFirebase()
+
+    useEffect(() => {
+        logArt()
+    }, [])
 
     useEffect(() => {
         if (!fallen) return
