@@ -3,7 +3,6 @@ import { AbstractMesh, Camera, Color4, Nullable, Scene } from '@babylonjs/core'
 import { getValidNote, randomRange } from '../utils/utils'
 import { fromMidi } from '@tonaljs/note'
 import { Player } from 'soundfont-player'
-import { colors } from '../config/scene-config'
 import { constants, colors } from '../config/scene-config'
 import { PianoGenie } from '@magenta/music'
 
@@ -56,14 +55,12 @@ const useStore = create<StoreState>((set, get) => ({
         steps: [],
         bounces: 0,
         colorTarget: Color4.FromHexString(colors.backgroundColor),
-        chord: null,
+        genie: null,
         player: null,
-        previousNote: null,
     },
     actions: {
-        init: async (scene, canvas, camera) => {
+        initScene: (scene, canvas, camera) => {
             set((state) => ({ statics: { scene: scene, canvas: canvas, camera: camera } }))
-            return Promise.resolve()
         },
         fall: null,
         playTone: () => {
