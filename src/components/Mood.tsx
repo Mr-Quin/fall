@@ -4,6 +4,7 @@ import { Transport } from 'tone'
 import { Engine } from '@babylonjs/core'
 import { instrument } from 'soundfont-player'
 import useStore from '../stores/store'
+import celesta from '../config/celesta'
 
 const progression = Progression.fromRomanNumerals('C', [
     // Canon
@@ -45,7 +46,7 @@ const Mood = (props) => {
             const player = await instrument(
                 Engine.audioEngine.audioContext as AudioContext,
                 'celesta',
-                { gain: 2 }
+                { gain: 2, nameToUrl: () => celesta } // use local audio data
             )
             useStore.setState((state) => (state.mutations.player = player as any))
             return player

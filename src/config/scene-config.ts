@@ -39,6 +39,7 @@ export const sceneConfig = {
     HALF_PI: Math.PI / 2,
     TITLE_CAMERA_ALPHA: 0.6,
     TITLE_CAMERA_BETA: 0.4,
+    TITLE_CAMERA_SPEED: 0.02,
     TITLE_PATH: titlePath,
     TITLE_ANIMATION_DELAY: 2,
     TITLE_ANIMATION_DURATION: 2,

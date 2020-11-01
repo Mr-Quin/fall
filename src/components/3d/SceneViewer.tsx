@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import styled from 'styled-components'
 
 import {
@@ -22,6 +22,7 @@ import {
     Vector3,
 } from '@babylonjs/core'
 import '@babylonjs/loaders/glTF'
+import * as CANNON from 'cannon'
 
 import { start as toneStart } from 'tone'
 
@@ -59,10 +60,10 @@ const {
     enableDebugMetrics,
     toggleOverlay,
 } = useHelperStore.getState()
-const { HALF_PI, TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA } = sceneConfig
+const { HALF_PI, TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA, TITLE_CAMERA_SPEED } = sceneConfig
 
 const onSceneReady = async (scene: Scene) => {
-    scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false))
+    scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false, 10, CANNON))
     const canvas = scene.getEngine().getRenderingCanvas()
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
     await init(scene, canvas, camera)
@@ -177,6 +178,8 @@ const onSceneReady = async (scene: Scene) => {
         )
     })
 
+    let alphaL1 = HALF_PI
+    let betaL1 = HALF_PI
     const titleCameraObserver = scene.onBeforeRenderObservable.add(() => {
         const normalizedPointerX = scene.pointerX / window.innerWidth
         const normalizedPointerY = scene.pointerY / window.innerHeight
@@ -184,8 +187,10 @@ const onSceneReady = async (scene: Scene) => {
             HALF_PI + mapValue(normalizedPointerX, 0, 1, -TITLE_CAMERA_ALPHA, TITLE_CAMERA_ALPHA)
         const betaTarget =
             HALF_PI + mapValue(normalizedPointerY, 0, 1, -TITLE_CAMERA_BETA, TITLE_CAMERA_BETA)
-        camera.alpha = Scalar.Lerp(camera.alpha, alphaTarget, 0.01)
-        camera.beta = Scalar.Lerp(camera.beta, betaTarget, 0.01)
+        alphaL1 = Scalar.Lerp(alphaL1, alphaTarget, TITLE_CAMERA_SPEED)
+        betaL1 = Scalar.Lerp(betaL1, betaTarget, TITLE_CAMERA_SPEED)
+        camera.alpha = Scalar.Lerp(camera.alpha, alphaL1, TITLE_CAMERA_SPEED)
+        camera.beta = Scalar.Lerp(camera.beta, betaL1, TITLE_CAMERA_SPEED)
     })
 
     // particle systems
@@ -265,7 +270,6 @@ const onSceneReady = async (scene: Scene) => {
         chains.forEach((link) => link.dispose())
         collisionPs.manualEmitCount = randomRange(4, 8, true)
         ambientPs.start()
-        // attach camera control only after the fall button is clicked
         camera.attachControl(canvas as HTMLCanvasElement, true)
 
         scene.onBeforeRenderObservable.remove(titleCameraObserver)
@@ -291,6 +295,7 @@ const onSceneReady = async (scene: Scene) => {
     useStore.setState({ sceneReady: true })
     useStore.setState(({ actions }) => void (actions.fall = fall) as any)
     console.info('Scene is ready')
+    return Promise.resolve(scene)
 }
 
 const SceneViewer = (props) => {
