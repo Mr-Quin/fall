@@ -6,9 +6,6 @@
     "@babylonjs/core": "^4.1.0",
     "@babylonjs/loaders": "^4.1.0",
     "@babylonjs/materials": "^4.1.0",
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.5.0",
-    "@testing-library/user-event": "^7.2.1",
     "@tonaljs/tonal": "^4.2.1",
     "@types/jest": "^24.9.1",
     "@types/node": "^12.19.1",
@@ -31,8 +28,13 @@
   "devDependencies": {
     "@babylonjs/gui": "^4.1.0",
     "@babylonjs/inspector": "^4.1.0",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.5.0",
+    "@testing-library/react-hooks": "^3.4.2",
+    "@testing-library/user-event": "^7.2.1",
     "prettier": "^2.1.2",
-    "react-app-rewired": "^2.1.6"
+    "react-app-rewired": "^2.1.6",
+    "react-test-renderer": "^16.14.0"
   },
   "scripts": {
     "start": "react-app-rewired start",

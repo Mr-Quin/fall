@@ -8,8 +8,8 @@ const FullScreen = styled.div`
     width: 100vw;
     height: 100vh;
     ${({ passPointer }) => passPointer && `pointer-events: none;`};
-    background: ${({ background }) => background || 'none'};
-    opacity: ${({ opacity }) => opacity || 1};
+    background: ${({ background }) => background ?? 'none'};
+    opacity: ${({ opacity }) => opacity ?? 1};
     ${({ blur }) => blur && 'backdrop-filter: blur(2px);'}
 `
 
@@ -33,7 +33,7 @@ const BlinkDot = styled.circle`
     fill: #fff;
     stroke: none;
     animation: ${blinkAnimation} 0.5s ease-in-out alternate infinite;
-    animation-delay: ${({ delay }) => delay || 0};
+    animation-delay: ${({ delay }) => delay ?? 0};
 `
 
 const HoverButton = styled.button`
