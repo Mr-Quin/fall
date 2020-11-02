@@ -4,7 +4,7 @@ import { getValidNote, randomRange } from '../utils/utils'
 import { fromMidi } from '@tonaljs/note'
 import { Player } from 'soundfont-player'
 import { constants, colors } from '../config/scene-config'
-import { PianoGenie } from '@magenta/music'
+import { PianoGenie } from '../helpers/PianoGenie'
 
 type StoreState = {
     sceneReady: boolean
@@ -31,7 +31,7 @@ type StoreState = {
             canvas: Nullable<HTMLCanvasElement>,
             camera: Nullable<Camera>
         ) => void
-        fall: Nullable<() => void>
+        fall: () => void
         playTone: () => void
         randomizeColor: () => void
     }
@@ -62,25 +62,27 @@ const useStore = create<StoreState>((set, get) => ({
         initScene: (scene, canvas, camera) => {
             set((state) => ({ statics: { scene: scene, canvas: canvas, camera: camera } }))
         },
-        fall: null,
+        fall: () => void 0,
         playTone: () => {
             const genie = get().mutations.genie
             const player = get().mutations.player
             if (genie === null || player === null) return
-            const note =
-                genie.next(randomRange(1, 9, true), GENIE_TEMPERATURE) + LOWEST_PIANO_MIDI_NUMBER
+
+            const rand = randomRange(0, 8, true)
+            const note = genie.next(rand, GENIE_TEMPERATURE) + LOWEST_PIANO_MIDI_NUMBER
             const validNote = getValidNote(note, LOWEST_INSTRUMENT_MIDI_NUMBER)
 
             player.play(fromMidi(validNote))
+
             get().actions.randomizeColor()
         },
         randomizeColor: () => {
             set(
                 ({ mutations }) =>
                     void (mutations.colorTarget = new Color4(
-                        randomRange(0, 0.2),
-                        randomRange(0, 0.2),
-                        randomRange(0, 0.2),
+                        randomRange(0, 0.12),
+                        randomRange(0, 0.12),
+                        randomRange(0, 0.12),
                         1
                     )) as any
             )
