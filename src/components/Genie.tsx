@@ -5,11 +5,11 @@ import useStore from '../stores/store'
 import celesta from '../helpers/celesta'
 import { PianoGenie } from '../helpers/PianoGenie'
 import { io } from '@tensorflow/tfjs/'
-import weights from '../helpers/weights_manifest.json'
+import weights from '../helpers/weights'
 
 const initGenie = async () => {
     const genie = new PianoGenie('/') // loading weights manually
-    const vars = await io.loadWeights(weights as any, '/genie')
+    const vars = await io.loadWeights(weights as any, '/')
 
     await genie.initialize(vars as any)
     genie.resetState()
