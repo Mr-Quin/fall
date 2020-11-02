@@ -19,10 +19,10 @@ const setAnimationFinished = () => void useStore.setState({ animationFinished: t
 const TitleScreen = (props) => {
     const [fall, animationFinished] = useStore(selector)
 
-    const handleClick = useCallback(() => {
-        fall()
+    const handleClick = useCallback(async () => {
         useStore.setState({ fallen: true })
         setAnimationFinished()
+        fall()
     }, [fall])
 
     useEffect(() => {
