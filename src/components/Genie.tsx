@@ -2,17 +2,22 @@ import { useEffect } from 'react'
 import { Engine } from '@babylonjs/core'
 import { instrument } from 'soundfont-player'
 import useStore from '../stores/store'
-import celesta from '../config/celesta'
-import { PianoGenie } from '@magenta/music'
+import celesta from '../helpers/celesta'
+import { PianoGenie } from '../helpers/PianoGenie'
+import { io } from '@tensorflow/tfjs/'
+import weights from '../helpers/weights_manifest.json'
 
 const initGenie = async () => {
-    const genie = new PianoGenie('/genie')
-    await genie.initialize()
+    const genie = new PianoGenie('/') // loading weights manually
+    const vars = await io.loadWeights(weights as any, '/genie')
+
+    await genie.initialize(vars as any)
     genie.resetState()
     return genie
 }
 
 const initPlayer = async () => {
+    console.log('loading instrument')
     return await instrument(
         Engine.audioEngine.audioContext as AudioContext,
         'celesta',
@@ -20,7 +25,7 @@ const initPlayer = async () => {
     )
 }
 
-const asyncOps = async () => {
+const initAudio = async () => {
     const player = await initPlayer()
     useStore.setState((state) => (state.mutations.player = player as any))
     const genie = await initGenie()
@@ -29,9 +34,7 @@ const asyncOps = async () => {
 
 const Genie = () => {
     useEffect(() => {
-        asyncOps().then(() => {
-            console.log('genie loaded')
-        })
+        initAudio()
     }, [])
 
     return null
