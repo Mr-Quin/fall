@@ -24,8 +24,6 @@ import {
 import '@babylonjs/loaders/glTF'
 import * as CANNON from 'cannon'
 
-import { start as toneStart } from 'tone'
-
 import SceneComponent from './SceneComponent'
 
 import useStore from '../../stores/store'
@@ -34,7 +32,7 @@ import useHelperStore from '../../stores/HelperStore'
 // star is loaded by file-loader as configured in config-overrides.js
 import { flare, star, starGlb, starRound } from '../../assets'
 import { mapValue, randomRange } from '../../utils/utils'
-import { sceneConfig, colors } from '../../config/scene-config'
+import { constants, colors } from '../../config/scene-config'
 
 const BabylonScene = styled(SceneComponent)`
     width: 100vw;
@@ -44,7 +42,7 @@ const BabylonScene = styled(SceneComponent)`
     outline: none;
 `
 
-const { init, playTone } = useStore.getState().actions
+const { initScene, playTone } = useStore.getState().actions
 const clearColor = useStore.getState().defaults.backgroundColor
 const {
     createChain,
@@ -60,16 +58,17 @@ const {
     enableDebugMetrics,
     toggleOverlay,
 } = useHelperStore.getState()
-const { HALF_PI, TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA, TITLE_CAMERA_SPEED } = sceneConfig
+const { TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA, TITLE_CAMERA_SPEED } = constants
+const HALF_PI = Math.PI / 2
 
 const onSceneReady = async (scene: Scene) => {
     scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false, 10, CANNON))
     const canvas = scene.getEngine().getRenderingCanvas()
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
-    await init(scene, canvas, camera)
+    initScene(scene, canvas, camera)
 
-    scene!.autoClear = false // Color buffer
-    scene!.autoClearDepthAndStencil = false // Depth and stencil, obviously
+    scene.autoClear = false // Color buffer
+    scene.autoClearDepthAndStencil = false // Depth and stencil, obviously
     scene.clearColor = Color4.FromHexString(clearColor)
     createLight()
     createGlow()
@@ -174,7 +173,7 @@ const onSceneReady = async (scene: Scene) => {
         scene.clearColor = Color4.Lerp(
             scene.clearColor,
             useStore.getState().mutations.colorTarget,
-            0.003
+            0.005
         )
     })
 
@@ -266,7 +265,6 @@ const onSceneReady = async (scene: Scene) => {
     const fall = async () => {
         const babylonAudioContext = Engine.audioEngine.audioContext!
         await babylonAudioContext.resume()
-        await toneStart()
         chains.forEach((link) => link.dispose())
         collisionPs.manualEmitCount = randomRange(4, 8, true)
         ambientPs.start()
@@ -312,6 +310,7 @@ const SceneViewer = (props) => {
                 //     lockstepMaxSteps: 4,
                 // }}
             />
+            {props.children}
         </>
     )
 }

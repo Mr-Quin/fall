@@ -1,9 +1,10 @@
 import create from 'zustand'
 import { AbstractMesh, Camera, Color4, Nullable, Scene } from '@babylonjs/core'
-import { randomFromArray, randomRange } from '../utils/utils'
-import { Chord } from '@tonaljs/chord'
+import { getValidNote, randomRange } from '../utils/utils'
+import { fromMidi } from '@tonaljs/note'
 import { Player } from 'soundfont-player'
-import { colors } from '../config/scene-config'
+import { constants, colors } from '../config/scene-config'
+import { PianoGenie } from '../helpers/PianoGenie'
 
 type StoreState = {
     sceneReady: boolean
@@ -21,20 +22,22 @@ type StoreState = {
         steps: AbstractMesh[]
         bounces: number
         colorTarget: Color4
-        chord: Nullable<Chord>
+        genie: Nullable<PianoGenie>
         player: Nullable<Player>
-        previousNote: Nullable<string>
     }
     actions: {
-        init: (
+        initScene: (
             scene: Nullable<Scene>,
             canvas: Nullable<HTMLCanvasElement>,
             camera: Nullable<Camera>
-        ) => Promise<void>
-        fall: Nullable<() => void>
+        ) => void
+        fall: () => void
         playTone: () => void
+        randomizeColor: () => void
     }
 }
+
+const { LOWEST_INSTRUMENT_MIDI_NUMBER, LOWEST_PIANO_MIDI_NUMBER, GENIE_TEMPERATURE } = constants
 
 const useStore = create<StoreState>((set, get) => ({
     sceneReady: false,
@@ -52,30 +55,34 @@ const useStore = create<StoreState>((set, get) => ({
         steps: [],
         bounces: 0,
         colorTarget: Color4.FromHexString(colors.backgroundColor),
-        chord: null,
+        genie: null,
         player: null,
-        previousNote: null,
     },
     actions: {
-        init: async (scene, canvas, camera) => {
+        initScene: (scene, canvas, camera) => {
             set((state) => ({ statics: { scene: scene, canvas: canvas, camera: camera } }))
-            return Promise.resolve()
         },
-        fall: null,
+        fall: () => void 0,
         playTone: () => {
-            const notes = get().mutations.chord!.notes
-            const note = randomFromArray(notes, (note) => note !== get().mutations.previousNote)
-            let octave = randomRange(6, 7, true)
-            if (note === 'A' || note === 'B') octave -= 1
+            const genie = get().mutations.genie
             const player = get().mutations.player
-            player && player.play(`${note}${octave}`)
-            set(({ mutations }) => void (mutations.previousNote = note) as any)
+            if (genie === null || player === null) return
+
+            const rand = randomRange(0, 8, true)
+            const note = genie.next(rand, GENIE_TEMPERATURE) + LOWEST_PIANO_MIDI_NUMBER
+            const validNote = getValidNote(note, LOWEST_INSTRUMENT_MIDI_NUMBER)
+
+            player.play(fromMidi(validNote))
+
+            get().actions.randomizeColor()
+        },
+        randomizeColor: () => {
             set(
                 ({ mutations }) =>
                     void (mutations.colorTarget = new Color4(
-                        randomRange(0, 0.2),
-                        randomRange(0, 0.2),
-                        randomRange(0, 0.2),
+                        randomRange(0, 0.07),
+                        randomRange(0, 0.07),
+                        randomRange(0, 0.07),
                         1
                     )) as any
             )

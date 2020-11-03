@@ -56,3 +56,13 @@ export const lerp = (v0: number, v1: number, t: number): number => {
 export const normalize = (val: number, max: number, min: number): number => {
     return (val - min) / (max - min)
 }
+
+export const getValidNote = (note: number, minNote: number): number => {
+    // midi number from 21 - 108
+    // transpose notes below minNote to above minNote
+    if (note < minNote) {
+        const diff = minNote - note
+        return note + (Math.floor(diff / 12) + 1) * 12
+    }
+    return note
+}
