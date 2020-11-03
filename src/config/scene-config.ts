@@ -7,26 +7,6 @@ import {
     Texture,
 } from '@babylonjs/core'
 
-export const logArt = () => {
-    console.log(
-        `%c
-                    *****/     ########\\  ######\\  ##\\       ##\\       
-         ,       *******//     ##  _____|##  __##\\ ## |      ## |      
-        ,,,,,/*********//      ## |      ## /  ## |## |      ## |        
-        ,,,,,,,,,,,,,*//       #####\\    ######## |## |      ## |           
-      ,,,,,,,,,,,,,,*///       ##  __|   ##  __## |## |      ## |      
-  ,,,,,,,,,,,,,,,,,*///        ## |      ## |  ## |## |      ## |      
-      ,,,,,,,,,,,,,,//         ## |      ## |  ## |########\\ ########\\ 
-        ,,,,,,,,,,,,,,         \\__|      \\__|  \\__|\\________|\\________|
-         ,,,,                
-          ,,                
-               %cPowered by React.js and Babylon.js`,
-        `color: ${colors.starColorSecondary};`,
-        "background-color:black; padding:5px; font-family: 'Poiret One', cursive; font-size: 1.5em"
-    )
-    ;(window as any).logArt = logArt || {}
-}
-
 const titlePath = [
     'M257,131H0V0H257ZM2,129H255V2H2Z',
     'M23.46,93.86V64.31H52.54l3.67-3.57v7.15H27.32V97.44H19.7Zm3.86-33.12-3.86,3.57V35.14H60l3.67-3.58v7.15H27.32Z',
@@ -36,7 +16,6 @@ const titlePath = [
 ]
 
 export const constants = {
-    HALF_PI: Math.PI / 2,
     TITLE_CAMERA_ALPHA: 0.6,
     TITLE_CAMERA_BETA: 0.4,
     TITLE_CAMERA_SPEED: 0.02,
