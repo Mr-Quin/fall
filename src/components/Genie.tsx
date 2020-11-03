@@ -17,7 +17,6 @@ const initGenie = async () => {
 }
 
 const initPlayer = async () => {
-    console.log('loading instrument')
     return await instrument(
         Engine.audioEngine.audioContext as AudioContext,
         'celesta',
