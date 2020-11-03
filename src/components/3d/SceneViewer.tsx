@@ -58,7 +58,8 @@ const {
     enableDebugMetrics,
     toggleOverlay,
 } = useHelperStore.getState()
-const { HALF_PI, TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA, TITLE_CAMERA_SPEED } = constants
+const { TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA, TITLE_CAMERA_SPEED } = constants
+const HALF_PI = Math.PI / 2
 
 const onSceneReady = async (scene: Scene) => {
     scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false, 10, CANNON))
@@ -66,8 +67,8 @@ const onSceneReady = async (scene: Scene) => {
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
     initScene(scene, canvas, camera)
 
-    scene!.autoClear = false // Color buffer
-    scene!.autoClearDepthAndStencil = false // Depth and stencil, obviously
+    scene.autoClear = false // Color buffer
+    scene.autoClearDepthAndStencil = false // Depth and stencil, obviously
     scene.clearColor = Color4.FromHexString(clearColor)
     createLight()
     createGlow()
@@ -172,7 +173,7 @@ const onSceneReady = async (scene: Scene) => {
         scene.clearColor = Color4.Lerp(
             scene.clearColor,
             useStore.getState().mutations.colorTarget,
-            0.001
+            0.005
         )
     })
 
