@@ -80,9 +80,9 @@ const useStore = create<StoreState>((set, get) => ({
             set(
                 ({ mutations }) =>
                     void (mutations.colorTarget = new Color4(
-                        randomRange(0, 0.12),
-                        randomRange(0, 0.12),
-                        randomRange(0, 0.12),
+                        randomRange(0, 0.07),
+                        randomRange(0, 0.07),
+                        randomRange(0, 0.07),
                         1
                     )) as any
             )
