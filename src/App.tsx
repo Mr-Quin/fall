@@ -1,14 +1,17 @@
 import React, { useEffect, Suspense } from 'react'
+import useStore from './stores/store'
+
 import TitleScreen from './components/TitleScreen'
 import Genie from './components/Genie'
-import useStore from './stores/store'
 import Footer from './components/Footer'
 import LoadingScreen from './components/LoadingScreen'
+
 import withFade from './styles/withFade'
-import useToggle from './hooks/useToggle'
 import { FullScreen } from './styles'
-import { logArt } from './config/scene-config'
+
+import useToggle from './hooks/useToggle'
 import useFirebase from './hooks/useFirebase'
+import useArt from './hooks/useArt'
 
 const LoadingBg = withFade(FullScreen)
 const TitleWrapper = withFade(FullScreen)
@@ -24,10 +27,7 @@ const App = () => {
     const [renderLoadingScreen, toggleRenderLoadingScreen] = useToggle(true)
 
     useFirebase()
-
-    useEffect(() => {
-        logArt()
-    }, [])
+    useArt()
 
     useEffect(() => {
         if (!fallen) return
