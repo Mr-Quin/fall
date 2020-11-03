@@ -17,3 +17,11 @@ declare module '*.stl'
 
 // tensor flow
 declare module '*.db'
+
+declare module 'worker-loader!*' {
+    class WebpackWorker extends Worker {
+        constructor()
+    }
+
+    export default WebpackWorker
+}
