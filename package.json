@@ -48,9 +48,6 @@
   "jest": {
     "transformIgnorePatterns": [
       "/!node_modules\\/@babylonjs/"
-    ],
-    "setupFiles": [
-      "jest-canvas-mock"
     ]
   },
   "eslintConfig": {
