@@ -8,13 +8,19 @@ export const randomFromArray = <T>(array: T[], compare?: (element: T) => boolean
     if (compare !== undefined) {
         array = array.filter(compare)
     }
-
     if (!array.length)
         throw new Error('Array is empty or comparison function returns an empty array.')
 
     return array[(Math.random() * array.length) << 0]
 }
 
+/**
+ * Generates a random number within a range
+ * @param {number} min The lower bound of the range, included
+ * @param {number} max The upper bound of the range, not included
+ * @param {boolean} floor Optional. When set to true, an integer will be returned. This is the same as calling Math.floor() on the outcome.
+ * @returns {number} A random number from within the given range
+ */
 export const randomRange = (min: number, max: number, floor?: boolean): number => {
     const num = Math.random() * (max - min) + min
     return floor ? num << 0 : num
