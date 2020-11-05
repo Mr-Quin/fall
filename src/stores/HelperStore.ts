@@ -47,8 +47,6 @@ type ChainOptions = {
 
 type HelperState = {
     addActions: (actionManager: ActionManager, actions: IAction | IAction[]) => ActionManager
-    createAmbientParticleSystem: (texture: Texture) => GPUParticleSystem
-    createTrailParticleSystem: (texture: Texture) => GPUParticleSystem
     createBlinkAnimation: (orig: any) => Animation
     createCamera: () => Camera
     createChain: (
@@ -56,18 +54,11 @@ type HelperState = {
         endMesh: AbstractMesh,
         options?: Partial<ChainOptions>
     ) => AbstractMesh[]
-    createCollisionParticleSystem: (capacity: number, texture: Texture) => ParticleSystem
     createEmissiveMaterial: (color: Color3) => PBRMetallicRoughnessMaterial
     createGlow: () => GlowLayer
     createGround: () => Mesh
     createLight: () => Light
     createRiseAnimation: (from: Vector3, to: Vector3) => Animation
-    createStarField: (
-        capacity: number,
-        texture: Texture,
-        color1?: Color4,
-        color2?: Color4
-    ) => ParticleSystem | GPUParticleSystem
     createTransition: (object: Node, prop: string, to: any, speed: number) => Promise<any>
     enableDebugMetrics: () => void
     setActionManager: (mesh: AbstractMesh) => ActionManager
@@ -89,93 +80,6 @@ type HelperState = {
 const useHelperStore = create<HelperState>((set, get) => ({
     addActions: (actionManager, actions) => {
         return actionManager
-    },
-
-    createAmbientParticleSystem: (texture) => {
-        const gpuParticleSystem = new GPUParticleSystem(
-            'ambient-particles',
-            { capacity: 50, randomTextureSize: 1024 },
-            scene!
-        )
-        const noiseTexture = new NoiseProceduralTexture('perlin', 256, scene)
-        noiseTexture.animationSpeedFactor = 2
-        noiseTexture.brightness = 0.5
-        noiseTexture.octaves = 5
-        gpuParticleSystem.noiseTexture = noiseTexture
-
-        gpuParticleSystem.noiseStrength = new Vector3(1, 1, 1)
-        gpuParticleSystem.emitRate = 10
-        gpuParticleSystem.minLifeTime = 3
-        gpuParticleSystem.maxLifeTime = 7
-        gpuParticleSystem.createBoxEmitter(
-            new Vector3(0, 1, 0),
-            Vector3.Zero(),
-            new Vector3(-10, 2, -10),
-            new Vector3(10, 0.1, 10)
-        )
-        gpuParticleSystem.particleTexture = texture
-        gpuParticleSystem.updateSpeed = 0.01
-        gpuParticleSystem.minSize = 0.05
-        gpuParticleSystem.maxSize = 0.05
-
-        gpuParticleSystem.addColorGradient(0, new Color4(0, 0, 0, 0))
-        gpuParticleSystem.addColorGradient(
-            0.2,
-            new Color4(0.4, 0.3, 0.8, 1),
-            new Color4(0.2, 0.9, 0.8, 1)
-        )
-        gpuParticleSystem.addColorGradient(0.8, new Color4(0.8, 0.3, 0.2, 1))
-        gpuParticleSystem.addColorGradient(1, new Color4(0, 0, 0, 0))
-
-        gpuParticleSystem.addSizeGradient(0, 0.2)
-        gpuParticleSystem.addSizeGradient(0.3, 0.02)
-        gpuParticleSystem.addSizeGradient(0.7, 0.15)
-        gpuParticleSystem.addSizeGradient(1, 0.02)
-
-        gpuParticleSystem.maxEmitPower = 0
-        gpuParticleSystem.minEmitPower = 0
-
-        return gpuParticleSystem
-    },
-
-    createTrailParticleSystem: (texture) => {
-        const gpuParticleSystem = new GPUParticleSystem(
-            'trail-particles',
-            { capacity: 50, randomTextureSize: 1024 },
-            scene!
-        )
-        const noiseTexture = new NoiseProceduralTexture('perlin', 256, scene)
-        noiseTexture.animationSpeedFactor = 2
-        noiseTexture.brightness = 0.5
-        noiseTexture.octaves = 5
-        gpuParticleSystem.noiseTexture = noiseTexture
-
-        gpuParticleSystem.noiseStrength = new Vector3(1, 1, 1)
-        gpuParticleSystem.emitRate = 5
-        gpuParticleSystem.minLifeTime = 0.2
-        gpuParticleSystem.maxLifeTime = 0.4
-        gpuParticleSystem.createPointEmitter(Vector3.Zero(), Vector3.Zero())
-        gpuParticleSystem.particleTexture = texture
-        gpuParticleSystem.updateSpeed = 1 / 100
-        gpuParticleSystem.maxInitialRotation = Math.PI
-        gpuParticleSystem.maxInitialRotation = -Math.PI
-
-        gpuParticleSystem.addColorGradient(0, new Color4(0, 0, 0, 0))
-        gpuParticleSystem.addColorGradient(
-            0.05,
-            new Color4(0.4, 0.3, 0.8, 1),
-            new Color4(0.2, 0.9, 0.8, 1)
-        )
-        gpuParticleSystem.addColorGradient(0.8, new Color4(0.8, 0.3, 0.2, 1))
-        gpuParticleSystem.addColorGradient(1, new Color4(0, 0, 0, 0))
-
-        gpuParticleSystem.addSizeGradient(0, 0.8)
-        gpuParticleSystem.addSizeGradient(1, 0)
-
-        gpuParticleSystem.maxEmitPower = 0
-        gpuParticleSystem.minEmitPower = 0
-
-        return gpuParticleSystem
     },
 
     createBlinkAnimation: (orig) => {
@@ -274,45 +178,6 @@ const useHelperStore = create<HelperState>((set, get) => ({
 
         return links
     },
-    createCollisionParticleSystem: (capacity, texture) => {
-        const particleSystem = new ParticleSystem('star-collision', capacity, scene!)
-        // emitter
-        particleSystem.createPointEmitter(Vector3.Zero(), Vector3.Zero())
-        // texture
-        particleSystem.particleTexture = texture
-        // color
-        particleSystem.color1 = new Color4(0.95, 0.9, 0.4, 1)
-        particleSystem.color2 = new Color4(1, 0.7, 0, 1)
-        particleSystem.colorDead = new Color4(0, 0, 0, 0)
-        // size
-        particleSystem.minSize = 0.2
-        particleSystem.maxSize = 0.4
-        // lifetime
-        particleSystem.minLifeTime = 0.7
-        particleSystem.maxLifeTime = 1
-        // emission power
-        particleSystem.minEmitPower = 1
-        particleSystem.maxEmitPower = 1
-        // speed gradient
-        particleSystem.addVelocityGradient(0, 3, 6)
-        particleSystem.addVelocityGradient(1.0, -0.5, -1)
-        // drag gradient
-        particleSystem.addDragGradient(0, 0.3)
-        particleSystem.addDragGradient(1, 0.7)
-        // rotation
-        particleSystem.minAngularSpeed = -Math.PI * 2
-        particleSystem.maxAngularSpeed = Math.PI * 2
-        // direction
-        particleSystem.direction1 = new Vector3(-1, -1, -1)
-        particleSystem.direction2 = new Vector3(1, 1, 1)
-        // gravity
-        particleSystem.gravity = new Vector3(0, 0, 0)
-        // emission rate
-        particleSystem.manualEmitCount = 0
-        particleSystem.emitRate = 0
-        // set manualEmitCount to emit particles
-        return particleSystem
-    },
 
     createEmissiveMaterial: (color): PBRMetallicRoughnessMaterial => {
         const material = new PBRMetallicRoughnessMaterial('material', scene!)
@@ -384,56 +249,6 @@ const useHelperStore = create<HelperState>((set, get) => ({
         animation.setKeys(moveKeys)
 
         return animation
-    },
-
-    createStarField: (capacity, texture, color1, color2) => {
-        const particleSystem = new GPUParticleSystem(
-            'star-field',
-            { capacity: capacity, randomTextureSize: 1024 },
-            scene!
-        )
-        // create noise
-        const noiseTexture = new NoiseProceduralTexture('perlin', 256, scene)
-        noiseTexture.animationSpeedFactor = 1
-        noiseTexture.brightness = 0.5
-        noiseTexture.octaves = 2
-        // apply noise
-        particleSystem.noiseTexture = noiseTexture
-        particleSystem.noiseStrength = new Vector3(0.5, 0.5, 0.5)
-        // use mesh emitter
-        particleSystem.createBoxEmitter(
-            Vector3.Zero(),
-            Vector3.Zero(),
-            new Vector3(-20, -15, -20),
-            new Vector3(20, 15, 20)
-        )
-        // texture
-        particleSystem.particleTexture = texture
-        // color
-        // particleSystem.color1 = new Color4(0.4, 0.2, 0.6, 1)
-        // particleSystem.color2 = new Color4(1, 0.7, 0, 1)
-        // particleSystem.colorDead = new Color4(0, 0, 0, 0)
-        particleSystem.addColorGradient(0, new Color4(0, 0, 0, 0))
-        particleSystem.addColorGradient(0.05, color1 || new Color4(0.4, 0.2, 0.6, 1))
-        particleSystem.addColorGradient(0.6, color2 || new Color4(0.8, 0.7, 0.2, 1))
-        particleSystem.addColorGradient(1, new Color4(0, 0, 0, 0))
-        // size
-        particleSystem.minSize = 0.05
-        particleSystem.maxSize = 0.5
-        // lifetime
-        particleSystem.minLifeTime = 4
-        particleSystem.maxLifeTime = 8
-        // emission power
-        particleSystem.minEmitPower = 0
-        particleSystem.maxEmitPower = 0
-        // rotation
-        particleSystem.minAngularSpeed = -Math.PI
-        particleSystem.maxAngularSpeed = Math.PI
-        // gravity
-        particleSystem.gravity = new Vector3(0, 0, 0)
-        // manual emit
-        particleSystem.emitRate = capacity / 3
-        return particleSystem
     },
 
     createTransition: (object, prop, to, speed) => {
