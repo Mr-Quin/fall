@@ -10,9 +10,6 @@ type StoreState = {
     sceneReady: boolean
     animationFinished: boolean
     fallen: boolean
-    defaults: {
-        backgroundColor: string
-    }
     statics: {
         scene: Nullable<Scene>
         canvas: Nullable<HTMLCanvasElement>
@@ -43,9 +40,6 @@ const useStore = create<StoreState>((set, get) => ({
     sceneReady: false,
     animationFinished: false,
     fallen: false,
-    defaults: {
-        backgroundColor: '#0b061f',
-    },
     statics: {
         scene: null,
         canvas: null,
