@@ -15,9 +15,15 @@ const FullScreen = styled.div`
 
 const Center = styled.div`
     position: absolute;
+    color: #fff;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+`
+
+const CenterText = styled.p`
+    text-align: center;
+    font-size: ${({ fontSize }) => fontSize ?? `inherit`};
 `
 
 const blinkAnimation = keyframes`
@@ -52,4 +58,4 @@ const HoverButton = styled.button`
         }`}
 `
 
-export { FullScreen, Center, BlinkDot, HoverButton }
+export { FullScreen, Center, CenterText, BlinkDot, HoverButton }
