@@ -24,7 +24,7 @@ const initPlayer = async () => {
     )
 }
 
-const initAudio = async () => {
+const init = async () => {
     const player = await initPlayer()
     useStore.setState((state) => (state.mutations.player = player as any))
     const genie = await initGenie()
@@ -33,7 +33,7 @@ const initAudio = async () => {
 
 const Genie = () => {
     useEffect(() => {
-        initAudio()
+        init()
     }, [])
 
     return null
