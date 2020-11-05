@@ -1,12 +1,3 @@
-import {
-    BaseParticleSystem,
-    GPUParticleSystem,
-    ParticleSystem,
-    ProceduralTexture,
-    Scene,
-    Texture,
-} from '@babylonjs/core'
-
 const titlePath = [
     'M257,131H0V0H257ZM2,129H255V2H2Z',
     'M23.46,93.86V64.31H52.54l3.67-3.57v7.15H27.32V97.44H19.7Zm3.86-33.12-3.86,3.57V35.14H60l3.67-3.58v7.15H27.32Z',
@@ -32,83 +23,13 @@ export const constants = {
 
 export const colors = {
     transparent: '#00000000',
-    backgroundColor: '#111122',
-    starColorPrimary: '#ffbb00',
-    starColorSecondary: '#ffee66',
-    particleColor1: '#ee5533',
-    particleColor2: '#9955dd',
-    particleColor3: '#66ccee',
-    particleColor4: '#117fff',
-    particleColor5: '#77cc55',
-    particleColor6: '#ff66aa',
+    backgroundColor: '#111122ff',
+    starColorPrimary: '#ffbb00ff',
+    starColorSecondary: '#ffee66ff',
+    particleColor1: '#cc4d33ff',
+    particleColor2: '#663399ff',
+    particleColor3: '#1a80ffff',
+    particleColor4: '#8099ccff',
+    particleColor5: '#ccb333ff',
+    particleColor6: '#ff4d99ff',
 }
-
-type Gradient<T> = [number, T, T?]
-
-type EmitterType =
-    | 'Box'
-    | 'Cone'
-    | 'CylinderDirected'
-    | 'Cylinder'
-    | 'Hemispheric'
-    | 'Mesh'
-    | 'Point'
-    | 'Sphere'
-    | 'SphereDirected'
-
-interface ParticleSystemOptions
-    extends Partial<Omit<BaseParticleSystem, 'noiseTexture' | 'particleTexture'>> {
-    name: string
-    capacity: number
-    randomTextureSize?: number
-    sizeGradient?: any[]
-    colorGradient?: any[]
-}
-
-export const createParticleSystem = <T>(
-    texture: Texture,
-    scene: Scene,
-    options: ParticleSystemOptions,
-    gpu?: boolean,
-    noiseTexture?: ProceduralTexture
-): ParticleSystem | GPUParticleSystem => {
-    let ps: ParticleSystem | GPUParticleSystem
-    const { name, capacity, randomTextureSize = 1024 } = options
-
-    if (gpu)
-        ps = new GPUParticleSystem(
-            name,
-            { capacity: capacity, randomTextureSize: randomTextureSize },
-            scene
-        )
-    else ps = new ParticleSystem(name, capacity, scene)
-
-    for (const optionsKey in options) {
-        if (ps.hasOwnProperty(optionsKey)) ps[optionsKey] = options[optionsKey]
-    }
-
-    ps.particleTexture = texture
-    noiseTexture && (ps.noiseTexture = noiseTexture)
-
-    return ps
-}
-
-/*
-    TODO: Refactor:
-          Move default values to config
-          Use config for particle systems
-          Detect GPU to set particle count
-          CPU Particle fallback
-          Reduce imperative code
- */
-
-/*
-    TODO: Features:
-          No repeated sound on bounce   --- done
-          Background color change with time/sound --- doable
-          Noise background?             --- difficult
-          Step colors?
-          Particle color change?
-          Ambient sound
-          Button to end game by making ground
- */
