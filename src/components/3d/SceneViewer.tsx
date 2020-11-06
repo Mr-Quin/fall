@@ -1,6 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
 
+import useStore from '../../stores/store'
+
 import {
     ActionManager,
     ArcRotateCamera,
@@ -10,8 +12,10 @@ import {
     Engine,
     ExecuteCodeAction,
     FxaaPostProcess,
+    GlowLayer,
     LensRenderingPipeline,
     Mesh,
+    NoiseProceduralTexture,
     PhysicsImpostor,
     PointLight,
     Scalar,
@@ -26,11 +30,21 @@ import * as CANNON from 'cannon'
 
 import SceneComponent from './SceneComponent'
 
-import useStore from '../../stores/store'
-import useHelperStore from '../../stores/HelperStore'
-
-// star is loaded by file-loader as configured in config-overrides.js
 import { flare, star, starGlb, starRound } from '../../assets'
+import {
+    createCollisionParticleSystem,
+    createStarFieldParticleSystem,
+    createAmbientParticleSystem,
+} from '../../helpers/particleHelper'
+import {
+    createChain,
+    createTransition,
+    createLight,
+    enableDebugMetrics,
+    setPhysicsImposter,
+    toggleOverlay,
+} from '../../helpers/sceneHelpers'
+import { createBlinkAnimation } from '../../helpers/animationHelpers'
 import { mapValue, randomRange } from '../../utils/utils'
 import { constants, colors } from '../../config/scene-config'
 
@@ -43,43 +57,35 @@ const BabylonScene = styled(SceneComponent)`
 `
 
 const { initScene, playTone } = useStore.getState().actions
-const clearColor = useStore.getState().defaults.backgroundColor
-const {
-    createChain,
-    createGlow,
-    createLight,
-    createTransition,
-    createBlinkAnimation,
-    createCollisionParticleSystem,
-    createAmbientParticleSystem,
-    createTrailParticleSystem,
-    createStarField,
-    setPhysicsImposter,
-    enableDebugMetrics,
-    toggleOverlay,
-} = useHelperStore.getState()
+
 const { TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA, TITLE_CAMERA_SPEED } = constants
 const HALF_PI = Math.PI / 2
 
 const onSceneReady = async (scene: Scene) => {
+    /**
+     * Scene setup
+     */
     scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false, 10, CANNON))
     const canvas = scene.getEngine().getRenderingCanvas()
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
-    initScene(scene, canvas, camera)
-
     scene.autoClear = false // Color buffer
     scene.autoClearDepthAndStencil = false // Depth and stencil, obviously
-    scene.clearColor = Color4.FromHexString(clearColor)
-    createLight()
-    createGlow()
+    scene.clearColor = Color4.FromHexString(colors.backgroundColor)
+    createLight(scene)
+    const glowLayer = new GlowLayer('glow', scene, { mainTextureSamples: 2 })
+    initScene(scene, canvas, camera)
 
-    // debugging
+    /**
+     * Debug controls
+     */
     if (process.env.NODE_ENV === 'development') {
-        toggleOverlay()
-        enableDebugMetrics()
+        await toggleOverlay(scene)
+        await enableDebugMetrics(scene)
     }
 
-    // camera
+    /**
+     * Camera setup
+     */
     camera.fov = 0.6
     camera.lowerRadiusLimit = 10
     camera.target = new Vector3(0, 35, 0)
@@ -93,11 +99,17 @@ const onSceneReady = async (scene: Scene) => {
         dof_aperture: 0.8,
         dof_pentagon: true,
     }
+
+    /**
+     * Postprocessing effects
+     */
     const lensEffect = new LensRenderingPipeline('lensEffects', lensParams, scene, 1.0, [camera])
     const fxaa = new FxaaPostProcess('fxaa', 1.0, camera)
     fxaa.autoClear = false
 
-    // load star
+    /**
+     * Load star model
+     */
     const {
         meshes: [starRoot, starMesh],
     } = await SceneLoader.ImportMeshAsync(
@@ -112,8 +124,21 @@ const onSceneReady = async (scene: Scene) => {
     starMesh.material!.freeze()
     starRoot.dispose()
 
-    // star physics
-    setPhysicsImposter(starMesh, PhysicsImpostor.BoxImpostor, {
+    /**
+     * Point light attached to star
+     */
+    const starLight = new PointLight('star-light', starMesh.position, scene)
+    starLight.intensity = 0.1
+    starLight.diffuse = new Color3(1, 1, 0.8)
+    starLight.specular = Color3.Black()
+    starLight.shadowEnabled = false
+    // animation to brighten light
+    const starLightAnimation = createBlinkAnimation(0.2)
+
+    /**
+     * Physics settings
+     */
+    setPhysicsImposter(starMesh, PhysicsImpostor.BoxImpostor, scene, {
         mass: 1,
         friction: 2,
         restitution: 0.5,
@@ -122,36 +147,35 @@ const onSceneReady = async (scene: Scene) => {
     const hangingPoint = Mesh.CreateBox('joint-root', 1, scene).convertToUnIndexedMesh()
     hangingPoint.isVisible = false
     hangingPoint.position.set(0, 40, 0)
-    setPhysicsImposter(hangingPoint, PhysicsImpostor.BoxImpostor, {
+    setPhysicsImposter(hangingPoint, PhysicsImpostor.BoxImpostor, scene, {
         mass: 0,
     })
 
-    // make chains
-    const chains = createChain(hangingPoint, starMesh, {
+    const chains = createChain(hangingPoint, starMesh, scene, {
         distance: 1,
         count: 1,
         mass: 1,
         hideChains: true,
     })
 
-    // set star position so it swings
+    /**
+     * Set star position for swing
+     * TODO: Pull this from a constant or local storage
+     */
     starMesh.position.set(0, 35, 0)
 
-    // setup camera goal. goal lerps to star to create smooth transitionTo
+    /**
+     * Camera goal
+     */
     const cameraGoal = new TransformNode('goal')
     cameraGoal.position = starMesh.position
     camera.lockedTarget = cameraGoal
 
-    // light attached to star
-    const starLight = new PointLight('star-light', starMesh.position, scene)
-    starLight.intensity = 0.1
-    starLight.diffuse = new Color3(1, 1, 0.8)
-    starLight.specular = Color3.Black()
-    starLight.shadowEnabled = false
-
-    // collider
+    /**
+     * Step collider
+     */
     const collider = Mesh.CreateBox('collider', 1, scene).convertToUnIndexedMesh()
-    setPhysicsImposter(collider, PhysicsImpostor.BoxImpostor, {
+    setPhysicsImposter(collider, PhysicsImpostor.BoxImpostor, scene, {
         mass: 0,
         restitution: 1,
         friction: 0.5,
@@ -165,11 +189,13 @@ const onSceneReady = async (scene: Scene) => {
     ambientPsEmitter.parent = cameraGoal
     ambientPsEmitter.isVisible = false
 
-    //goal and light follow star
+    /**
+     * Make camera, light, and collider follow star, and change background color
+     */
     const mainSceneObserver = scene.onBeforeRenderObservable.add(() => {
         cameraGoal.position = Vector3.Lerp(cameraGoal.position, starMesh.position, 0.1)
-        starLight.position = starMesh.position
-        collider.position.set(starMesh.position.x, colliderYTarget, starMesh.position.z)
+        starLight.position = starMesh.position // copying position works better than parenting
+        collider.position.set(starMesh.position.x, colliderYTarget, starMesh.position.z) // collider is always directly below star
         scene.clearColor = Color4.Lerp(
             scene.clearColor,
             useStore.getState().mutations.colorTarget,
@@ -177,55 +203,79 @@ const onSceneReady = async (scene: Scene) => {
         )
     })
 
-    let alphaL1 = HALF_PI
-    let betaL1 = HALF_PI
-    const titleCameraObserver = scene.onBeforeRenderObservable.add(() => {
-        const normalizedPointerX = scene.pointerX / window.innerWidth
-        const normalizedPointerY = scene.pointerY / window.innerHeight
-        const alphaTarget =
-            HALF_PI + mapValue(normalizedPointerX, 0, 1, -TITLE_CAMERA_ALPHA, TITLE_CAMERA_ALPHA)
-        const betaTarget =
-            HALF_PI + mapValue(normalizedPointerY, 0, 1, -TITLE_CAMERA_BETA, TITLE_CAMERA_BETA)
-        alphaL1 = Scalar.Lerp(alphaL1, alphaTarget, TITLE_CAMERA_SPEED)
-        betaL1 = Scalar.Lerp(betaL1, betaTarget, TITLE_CAMERA_SPEED)
-        camera.alpha = Scalar.Lerp(camera.alpha, alphaL1, TITLE_CAMERA_SPEED)
-        camera.beta = Scalar.Lerp(camera.beta, betaL1, TITLE_CAMERA_SPEED)
-    })
-
-    // particle systems
+    /**
+     * Particles
+     */
+    // textures
     const starTex = new Texture(star, scene)
     const roundStarTex = new Texture(starRound, scene)
     const flareTex = new Texture(flare, scene)
-    const collisionPs = createCollisionParticleSystem(50, starTex)
-    const starField1 = createStarField(300, roundStarTex)
-    const starField2 = createStarField(
-        300,
-        roundStarTex,
-        new Color4(0.5, 0.6, 0.8, 1),
-        new Color4(1, 0.3, 0.6, 1)
+    // noise
+    const noiseTex = new NoiseProceduralTexture('perlin', 256, scene)
+    noiseTex.animationSpeedFactor = 1
+    noiseTex.brightness = 0.5
+    noiseTex.octaves = 2
+    const noiseTex2 = new NoiseProceduralTexture('perlin', 256, scene)
+    noiseTex2.animationSpeedFactor = 2
+    noiseTex2.brightness = 0.5
+    noiseTex2.octaves = 5
+    // particle systems
+    const collisionPs = createCollisionParticleSystem(starTex, 50, scene)
+    const starField1 = createStarFieldParticleSystem(
+        {
+            capacity: 300,
+            texture: roundStarTex,
+            noiseTexture: noiseTex,
+            color1: Color4.FromHexString(colors.particleColor2),
+            color2: Color4.FromHexString(colors.particleColor5),
+        },
+        scene
     )
-    const starField3 = createStarField(600, flareTex)
-    const starField4 = createStarField(
-        600,
-        flareTex,
-        new Color4(0.1, 0.5, 1, 1),
-        new Color4(0.3, 0.4, 0.8, 1)
+    const starField2 = createStarFieldParticleSystem(
+        {
+            capacity: 300,
+            texture: roundStarTex,
+            noiseTexture: noiseTex,
+            color1: Color4.FromHexString(colors.particleColor4),
+            color2: Color4.FromHexString(colors.particleColor6),
+        },
+        scene
     )
-    const ambientPs = createAmbientParticleSystem(flareTex)
+    const starField3 = createStarFieldParticleSystem(
+        {
+            capacity: 50,
+            texture: flareTex,
+            noiseTexture: noiseTex,
+            color1: Color4.FromHexString(colors.particleColor2),
+            color2: Color4.FromHexString(colors.particleColor5),
+            maxSize: 0.2,
+        },
+        scene
+    )
+    const ambientField = createAmbientParticleSystem(
+        {
+            capacity: 50,
+            texture: flareTex,
+            noiseTexture: noiseTex2,
+            color1: Color4.FromHexString(colors.particleColor2),
+            color2: Color4.FromHexString(colors.particleColor1),
+        },
+        scene
+    )
     collisionPs.emitter = starMesh
     starField1.emitter = starMesh
     starField2.emitter = starMesh
     starField3.emitter = starMesh
-    starField4.emitter = starMesh
-    ambientPs.emitter = ambientPsEmitter
+    ambientField.emitter = ambientPsEmitter
     collisionPs.start()
     starField1.start()
     starField2.start()
-    // ambientPs is started when star hits ground
+    starField3.start()
+    ambientField.start()
 
-    // animations
-    const starLightAnimation = createBlinkAnimation(0.2)
-
+    /**
+     * Function to create a box at each collision location
+     */
     const step = Mesh.CreateBox('step-box', 3, scene).convertToUnIndexedMesh()
     step.scaling.set(1, 1 / 5, 1)
     step.isVisible = false
@@ -235,18 +285,25 @@ const onSceneReady = async (scene: Scene) => {
         return step.createInstance(`step-box-clone-${bounces.toString()}`)
     }
 
-    // actions
+    /**
+     * On collision action
+     */
     const onCollision = () => {
         console.log('bounce')
+        // brightens the light briefly
         scene.beginDirectAnimation(starLight, [starLightAnimation], 0, 10)
+        // emit collision particles
         collisionPs.manualEmitCount = randomRange(3, 5, true)
+        // play a sound
         playTone()
+        // set the collider to a lower y position
         colliderYTarget -= randomRange(8, 16, true)
-
+        // make a box at collision location
         const step = createStep()
         step.position.set(starMesh.position.x, starMesh.position.y - 3 / 5, starMesh.position.z)
         useStore.setState(({ mutations }) => void (mutations.bounces += 1) as any)
     }
+    // register the onCollision action
     starMesh.actionManager = new ActionManager(scene)
     starMesh.actionManager.registerAction(
         new ExecuteCodeAction(
@@ -261,44 +318,69 @@ const onSceneReady = async (scene: Scene) => {
         )
     )
 
-    // star falls
+    /**
+     * Make camera follow mouse on title screen, unregistered when star falls
+     * This is a 2 step lerp. The alpha and beta goal lerps to a normalized mouse position,
+     * camera orientation then lerps to the goals.
+     */
+    let alphaGoal = HALF_PI
+    let betaGoal = HALF_PI
+    const titleCameraObserver = scene.onBeforeRenderObservable.add(() => {
+        // normalize pointer location
+        const normalizedPointerX = scene.pointerX / window.innerWidth
+        const normalizedPointerY = scene.pointerY / window.innerHeight
+        // map pointer location to camera location
+        const alphaTarget =
+            HALF_PI + mapValue(normalizedPointerX, 0, 1, -TITLE_CAMERA_ALPHA, TITLE_CAMERA_ALPHA)
+        const betaTarget =
+            HALF_PI + mapValue(normalizedPointerY, 0, 1, -TITLE_CAMERA_BETA, TITLE_CAMERA_BETA)
+        // interpolate goal to camera target
+        alphaGoal = Scalar.Lerp(alphaGoal, alphaTarget, TITLE_CAMERA_SPEED)
+        betaGoal = Scalar.Lerp(betaGoal, betaTarget, TITLE_CAMERA_SPEED)
+        // interpolate camera to goal
+        camera.alpha = Scalar.Lerp(camera.alpha, alphaGoal, TITLE_CAMERA_SPEED)
+        camera.beta = Scalar.Lerp(camera.beta, betaGoal, TITLE_CAMERA_SPEED)
+    })
+
+    /**
+     * Star fall trigger
+     */
     const fall = async () => {
+        // resume audio context
         const babylonAudioContext = Engine.audioEngine.audioContext!
         await babylonAudioContext.resume()
+        // remove chain to make star fall
         chains.forEach((link) => link.dispose())
         collisionPs.manualEmitCount = randomRange(4, 8, true)
-        ambientPs.start()
+        // attach camera controls
         camera.attachControl(canvas as HTMLCanvasElement, true)
-
+        // remove the camera controller on title screen
         scene.onBeforeRenderObservable.remove(titleCameraObserver)
+        // tone down depth of field
         const apertureObserver = scene.onBeforeRenderObservable.add(() => {
             const { dof_aperture } = lensParams
             lensParams.dof_aperture = Scalar.Lerp(dof_aperture, 0.08, 0.03)
             lensEffect.setAperture(dof_aperture)
             if (dof_aperture < 0.085) apertureObserver!.unregisterOnNextCall = true
         })
-
-        let resolve // resolves when beta transition finishes
-        const promise = new Promise((res) => (resolve = res))
-
-        createTransition(camera, 'beta', Math.PI / 4, 20).then(() => {
-            resolve(1)
-            createTransition(camera, 'alpha', (3 / 4) * Math.PI, 55).then(
-                () => void scene.onBeforeRenderObservable.add(() => void (camera.alpha += 0.002))
-            )
-        })
-        return promise
+        // animate camera
+        await createTransition(camera, 'beta', Math.PI / 4, 20)
+        await createTransition(camera, 'alpha', (3 / 4) * Math.PI, 55)
+        // rotate camera each frame
+        scene.onBeforeRenderObservable.add(() => void (camera.alpha += 0.002))
     }
 
+    /**
+     * Add functions to store, resolve this promise
+     */
     useStore.setState({ sceneReady: true })
     useStore.setState(({ actions }) => void (actions.fall = fall) as any)
     console.info('Scene is ready')
-    return Promise.resolve(scene)
+    return scene
 }
 
 const SceneViewer = (props) => {
     // const onRender = useCallback((scene) => void 0, [])
-
     return (
         <>
             <BabylonScene
