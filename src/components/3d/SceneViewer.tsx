@@ -6,7 +6,6 @@ import useStore from '../../stores/store'
 import {
     ActionManager,
     ArcRotateCamera,
-    CannonJSPlugin,
     Color3,
     Color4,
     Engine,
@@ -16,6 +15,7 @@ import {
     LensRenderingPipeline,
     Mesh,
     NoiseProceduralTexture,
+    OimoJSPlugin,
     PhysicsImpostor,
     PointLight,
     Scalar,
@@ -26,7 +26,7 @@ import {
     Vector3,
 } from '@babylonjs/core'
 import '@babylonjs/loaders/glTF'
-import * as CANNON from 'cannon'
+import * as OIMO from 'oimo'
 
 import SceneComponent from './SceneComponent'
 
@@ -56,6 +56,7 @@ const BabylonScene = styled(SceneComponent)`
     outline: none;
 `
 
+const { db } = useStore.getState()
 const { initScene, playTone } = useStore.getState().actions
 
 const { TITLE_CAMERA_ALPHA, TITLE_CAMERA_BETA, TITLE_CAMERA_SPEED } = constants
@@ -65,7 +66,7 @@ const onSceneReady = async (scene: Scene) => {
     /**
      * Scene setup
      */
-    scene.enablePhysics(new Vector3(0, -9.8, 0), new CannonJSPlugin(false, 10, CANNON))
+    scene.enablePhysics(new Vector3(0, -9.8, 0), new OimoJSPlugin(10, OIMO))
     const canvas = scene.getEngine().getRenderingCanvas()
     const camera = new ArcRotateCamera('Camera', 0, 0, 0, Vector3.Zero(), scene)
     scene.autoClear = false // Color buffer
@@ -76,20 +77,18 @@ const onSceneReady = async (scene: Scene) => {
     initScene(scene, canvas, camera)
 
     /**
-     * Debug controls
+     * Load last position and steps from indexeddb
      */
-    if (process.env.NODE_ENV === 'development') {
-        await toggleOverlay(scene)
-        await enableDebugMetrics(scene)
-    }
+    const steps = (await db.steps.toArray()) || []
+    const initPosition = steps.length ? steps[steps.length - 1].position : new Vector3(0, 40, 0)
 
     /**
      * Camera setup
      */
     camera.fov = 0.6
     camera.lowerRadiusLimit = 10
-    camera.target = new Vector3(0, 35, 0)
-    camera.setPosition(new Vector3(0, 35, 15))
+    camera.target = new Vector3(0, 0, 0).addInPlace(initPosition)
+    camera.setPosition(new Vector3(0, 0, 15).addInPlace(initPosition))
     const lensParams = {
         edge_blur: 0.5,
         chromatic_aberration: 0.5,
@@ -134,35 +133,48 @@ const onSceneReady = async (scene: Scene) => {
     starLight.shadowEnabled = false
     // animation to brighten light
     const starLightAnimation = createBlinkAnimation(0.2)
+    // copying position from starMesh
+    starLight.position = starMesh.position
 
     /**
      * Physics settings
      */
+    // star physics
     setPhysicsImposter(starMesh, PhysicsImpostor.BoxImpostor, scene, {
         mass: 1,
         friction: 2,
-        restitution: 0.5,
+        restitution: 0.25,
     })
-
+    // chain anchor
     const hangingPoint = Mesh.CreateBox('joint-root', 1, scene).convertToUnIndexedMesh()
     hangingPoint.isVisible = false
-    hangingPoint.position.set(0, 40, 0)
+    hangingPoint.position.copyFrom(initPosition)
     setPhysicsImposter(hangingPoint, PhysicsImpostor.BoxImpostor, scene, {
         mass: 0,
     })
-
+    // make chain
     const chains = createChain(hangingPoint, starMesh, scene, {
-        distance: 1,
+        distance: 2,
         count: 1,
         mass: 1,
-        hideChains: true,
+        hideChains: false,
     })
+    // set star point after physics so it swings
+    starMesh.position.copyFrom(initPosition).addInPlace(new Vector3(2, -4, 0))
+
+    // scene.getPhysicsEngine()!.setTimeStep(1 / 60 / 10)
 
     /**
-     * Set star position for swing
-     * TODO: Pull this from a constant or local storage
+     * Step collider
      */
-    starMesh.position.set(0, 35, 0)
+    const collider = Mesh.CreateBox('collider', 1, scene).convertToUnIndexedMesh()
+    setPhysicsImposter(collider, PhysicsImpostor.BoxImpostor, scene, {
+        mass: 0,
+        restitution: 0.5,
+        friction: 0.5,
+    })
+    let colliderYTarget = initPosition.y - 35
+    collider.isVisible = false
 
     /**
      * Camera goal
@@ -172,29 +184,34 @@ const onSceneReady = async (scene: Scene) => {
     camera.lockedTarget = cameraGoal
 
     /**
-     * Step collider
+     * Make camera follow mouse on title screen, unregistered when star falls
+     * This is a 2 step lerp. The alpha and beta goal lerps to a normalized mouse position,
+     * camera orientation then lerps to the goals.
      */
-    const collider = Mesh.CreateBox('collider', 1, scene).convertToUnIndexedMesh()
-    setPhysicsImposter(collider, PhysicsImpostor.BoxImpostor, scene, {
-        mass: 0,
-        restitution: 1,
-        friction: 0.5,
+    let alphaGoal = HALF_PI
+    let betaGoal = HALF_PI
+    const titleCameraObserver = scene.onBeforeRenderObservable.add(() => {
+        // normalize pointer location
+        const normalizedPointerX = scene.pointerX / window.innerWidth
+        const normalizedPointerY = scene.pointerY / window.innerHeight
+        // map pointer location to camera location
+        const alphaTarget =
+            HALF_PI + mapValue(normalizedPointerX, 0, 1, -TITLE_CAMERA_ALPHA, TITLE_CAMERA_ALPHA)
+        const betaTarget =
+            HALF_PI + mapValue(normalizedPointerY, 0, 1, -TITLE_CAMERA_BETA, TITLE_CAMERA_BETA)
+        // interpolate goal to camera target
+        alphaGoal = Scalar.Lerp(alphaGoal, alphaTarget, TITLE_CAMERA_SPEED)
+        betaGoal = Scalar.Lerp(betaGoal, betaTarget, TITLE_CAMERA_SPEED)
+        // interpolate camera to goal
+        camera.alpha = Scalar.Lerp(camera.alpha, alphaGoal, TITLE_CAMERA_SPEED)
+        camera.beta = Scalar.Lerp(camera.beta, betaGoal, TITLE_CAMERA_SPEED)
     })
-    let colliderYTarget = 0
-    collider.position.set(0, 0, 0)
-    collider.isVisible = false
-
-    // particle field following star
-    const ambientPsEmitter = Mesh.CreateBox('particle-field', 1, scene).convertToUnIndexedMesh()
-    ambientPsEmitter.parent = cameraGoal
-    ambientPsEmitter.isVisible = false
 
     /**
      * Make camera, light, and collider follow star, and change background color
      */
     const mainSceneObserver = scene.onBeforeRenderObservable.add(() => {
         cameraGoal.position = Vector3.Lerp(cameraGoal.position, starMesh.position, 0.1)
-        starLight.position = starMesh.position // copying position works better than parenting
         collider.position.set(starMesh.position.x, colliderYTarget, starMesh.position.z) // collider is always directly below star
         scene.clearColor = Color4.Lerp(
             scene.clearColor,
@@ -262,11 +279,12 @@ const onSceneReady = async (scene: Scene) => {
         },
         scene
     )
+
     collisionPs.emitter = starMesh
     starField1.emitter = starMesh
     starField2.emitter = starMesh
     starField3.emitter = starMesh
-    ambientField.emitter = ambientPsEmitter
+    ambientField.emitter = starMesh
     collisionPs.start()
     starField1.start()
     starField2.start()
@@ -277,12 +295,25 @@ const onSceneReady = async (scene: Scene) => {
      * Function to create a box at each collision location
      */
     const step = Mesh.CreateBox('step-box', 3, scene).convertToUnIndexedMesh()
+    step.registerInstancedBuffer('color', 4) // register buffer to be used by instances
     step.scaling.set(1, 1 / 5, 1)
     step.isVisible = false
 
-    const createStep = () => {
+    const createStep = (position: Vector3) => {
         const bounces = useStore.getState().mutations.bounces
-        return step.createInstance(`step-box-clone-${bounces.toString()}`)
+        const clonedStep = step.createInstance(`step-box-clone-${bounces.toString()}`)
+        clonedStep.position.copyFrom(position).subtractInPlace(new Vector3(0, 5 / 3, 0))
+        return clonedStep
+    }
+
+    /**
+     * Create steps from positions in indexeddb
+     */
+    for (const step of steps) {
+        const s = createStep(step.position)
+        // s.showBoundingBox = true
+        s.instancedBuffers.color = new Color4(Math.random(), Math.random(), Math.random(), 1)
+        s.hasVertexAlpha = true
     }
 
     /**
@@ -295,12 +326,11 @@ const onSceneReady = async (scene: Scene) => {
         // emit collision particles
         collisionPs.manualEmitCount = randomRange(3, 5, true)
         // play a sound
-        playTone()
+        playTone(starMesh.position)
         // set the collider to a lower y position
         colliderYTarget -= randomRange(8, 16, true)
         // make a box at collision location
-        const step = createStep()
-        step.position.set(starMesh.position.x, starMesh.position.y - 3 / 5, starMesh.position.z)
+        const step = createStep(starMesh.position)
         useStore.setState(({ mutations }) => void (mutations.bounces += 1) as any)
     }
     // register the onCollision action
@@ -317,30 +347,6 @@ const onSceneReady = async (scene: Scene) => {
             onCollision
         )
     )
-
-    /**
-     * Make camera follow mouse on title screen, unregistered when star falls
-     * This is a 2 step lerp. The alpha and beta goal lerps to a normalized mouse position,
-     * camera orientation then lerps to the goals.
-     */
-    let alphaGoal = HALF_PI
-    let betaGoal = HALF_PI
-    const titleCameraObserver = scene.onBeforeRenderObservable.add(() => {
-        // normalize pointer location
-        const normalizedPointerX = scene.pointerX / window.innerWidth
-        const normalizedPointerY = scene.pointerY / window.innerHeight
-        // map pointer location to camera location
-        const alphaTarget =
-            HALF_PI + mapValue(normalizedPointerX, 0, 1, -TITLE_CAMERA_ALPHA, TITLE_CAMERA_ALPHA)
-        const betaTarget =
-            HALF_PI + mapValue(normalizedPointerY, 0, 1, -TITLE_CAMERA_BETA, TITLE_CAMERA_BETA)
-        // interpolate goal to camera target
-        alphaGoal = Scalar.Lerp(alphaGoal, alphaTarget, TITLE_CAMERA_SPEED)
-        betaGoal = Scalar.Lerp(betaGoal, betaTarget, TITLE_CAMERA_SPEED)
-        // interpolate camera to goal
-        camera.alpha = Scalar.Lerp(camera.alpha, alphaGoal, TITLE_CAMERA_SPEED)
-        camera.beta = Scalar.Lerp(camera.beta, betaGoal, TITLE_CAMERA_SPEED)
-    })
 
     /**
      * Star fall trigger
@@ -368,6 +374,14 @@ const onSceneReady = async (scene: Scene) => {
         await createTransition(camera, 'alpha', (3 / 4) * Math.PI, 55)
         // rotate camera each frame
         scene.onBeforeRenderObservable.add(() => void (camera.alpha += 0.002))
+    }
+
+    /**
+     * Debug controls
+     */
+    if (process.env.NODE_ENV === 'development') {
+        await toggleOverlay(scene)
+        await enableDebugMetrics(scene)
     }
 
     /**
