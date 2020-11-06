@@ -31,14 +31,14 @@ const supportWebGL2 = !!document.createElement('canvas').getContext('webgl2')
 
 const App = () => {
     const [sceneReady, animationFinished, fallen] = useStore(selector)
-    const [renderLoadingScreen, toggleRenderLoadingScreen] = useToggle(true)
+    const [renderOverlayScreen, toggleRenderOverlayScreen] = useToggle(true)
 
     useFirebase()
     useArt()
 
     useEffect(() => {
         if (!fallen) return
-        const timeout = setTimeout(toggleRenderLoadingScreen, 2000)
+        const timeout = setTimeout(toggleRenderOverlayScreen, 2000)
         return () => clearTimeout(timeout)
     }, [fallen])
 
@@ -46,7 +46,7 @@ const App = () => {
         <FullScreen background={backgroundColor}>
             {supportWebGL2 ? (
                 <>
-                    {renderLoadingScreen && (
+                    {renderOverlayScreen && (
                         <TitleWrapper show={!fallen} transition passPointer>
                             <LoadingBg
                                 show={!animationFinished}
