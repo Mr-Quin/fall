@@ -97,7 +97,7 @@ const createChain = (startMesh, endMesh, scene, options) => {
 
     const links: AbstractMesh[] = []
     const jointData = {
-        mainPivot: new Vector3(0, -distance, 0),
+        mainPivot: new Vector3(0, 0, 0),
         connectedPivot: new Vector3(0, distance, 0),
     }
     for (let i = 0; i < count; i++) {
@@ -125,13 +125,17 @@ const createChain = (startMesh, endMesh, scene, options) => {
         }
     }
 
-    startMesh.physicsImpostor!.createJoint(
-        links[0].physicsImpostor!,
-        PhysicsJoint.BallAndSocketJoint,
-        jointData
-    )
+    if (count > 0) {
+        startMesh.physicsImpostor!.createJoint(
+            links[0].physicsImpostor!,
+            PhysicsJoint.BallAndSocketJoint,
+            jointData
+        )
+    } else {
+        links.push(startMesh)
+    }
 
-    endMesh.position.copyFrom(links[links.length - 1].position)
+    endMesh.position.copyFrom(links[links.length - 1].position.add(new Vector3(0, -distance, 0)))
 
     links[links.length - 1].physicsImpostor!.createJoint(
         endMesh.physicsImpostor!,
