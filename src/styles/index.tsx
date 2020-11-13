@@ -34,11 +34,18 @@ const Button = styled.button`
     cursor: pointer;
 `
 
-const Corner = styled.div`
+const BottomLeftCorner = styled.div`
     position: absolute;
     bottom: 1em;
     left: 1em;
     user-select: none;
 `
 
-export { FullScreen, Center, CenterText, Button, Corner }
+const TopRightCorner = styled.div`
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    user-select: none;
+`
+
+export { FullScreen, Center, CenterText, Button, BottomLeftCorner, TopRightCorner }
