@@ -51,6 +51,8 @@ export const colors = {
     STAR_LIGHT_COLOR: '#ffffccff',
     TITLE_FILL_COLOR: '#ffffffff',
     TITLE_STROKE_COLOR: '#ffffffff',
+    GITHUB_ICON_COLOR: '#676767ff',
+    BUTTON_HOVER_COLOR: '#222233ff',
     TRANSPARENT: '#00000000',
 }
 

@@ -1,12 +1,13 @@
 import React, { useCallback } from 'react'
 import styled from 'styled-components'
 import withFade from '../styles/withFade'
-import { Button, Corner } from '../styles'
+import { Button, BottomLeftCorner } from '../styles'
+import { colors } from '../config/scene-config'
 import useStore from '../stores/store'
 import useToggle from '../hooks/useToggle'
 import shallow from 'zustand/shallow'
 
-const StyledUI = styled(Corner)`
+const StyledUI = styled(BottomLeftCorner)`
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -26,7 +27,7 @@ const StyledButton = styled(Button)`
         `cursor: pointer;  
         pointer-events: all;  
         &:hover {
-        background: darkgrey;
+        background: ${colors.BUTTON_HOVER_COLOR};
         }`}
 `
 
