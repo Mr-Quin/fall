@@ -53,7 +53,7 @@ type StoreState = {
         appendDb: (data: Step) => void
         fall: () => void
         playTone: () => any
-        endJourney: () => void
+        takeBreak: () => void
         randomizeColor: () => void
     }
 }
@@ -120,7 +120,7 @@ const useStore = create<StoreState>((set, get) => ({
 
             return get().mutations.lastNote
         },
-        endJourney: () => {},
+        takeBreak: () => {},
         randomizeColor: () => {
             set(
                 ({ mutations }) =>
