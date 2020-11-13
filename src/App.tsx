@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense } from 'react'
+import React, { useEffect, Suspense, lazy } from 'react'
 import useStore from './stores/store'
 import shallow from 'zustand/shallow'
 
@@ -6,7 +6,6 @@ import TitleScreen from './components/TitleScreen'
 import Footer from './components/Footer'
 import LoadingScreen from './components/LoadingScreen'
 import Ui from './components/Ui'
-import { WebGL2Error } from './components/ErrorPage'
 
 import withFade from './styles/withFade'
 import { FullScreen } from './styles'
@@ -20,7 +19,8 @@ import { colors } from './config/scene-config'
 const LoadingBg = withFade(FullScreen)
 const TitleWrapper = withFade(FullScreen)
 
-const LazyBabylonScene = React.lazy(() => import('./components/3d/SceneViewer'))
+const LazyBabylonScene = lazy(() => import('./components/3d/SceneViewer'))
+const LazyWebGL2Error = lazy(() => import('./components/ErrorPage'))
 
 const selector = (state) => [state.sceneReady, state.titleAnimationFinished, state.fallen]
 const { BACKGROUND_COLOR } = colors
@@ -30,9 +30,9 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
 )
 const supportWebGL2 = !!document.createElement('canvas').getContext('webgl2')
 
-// if (process.env.NODE_ENV !== 'development') {
-//     console.debug = () => {}
-// }
+if (process.env.NODE_ENV !== 'development') {
+    console.debug = () => {}
+}
 
 const App = () => {
     const [sceneReady, titleAnimationFinished, fallen] = useStore(selector, shallow)
@@ -65,9 +65,7 @@ const App = () => {
                             {sceneReady && <TitleScreen />}
                         </TitleWrapper>
                     )}
-
                     <Ui />
-
                     <Suspense fallback={null}>
                         <LazyBabylonScene />
                     </Suspense>
@@ -77,7 +75,9 @@ const App = () => {
                     ) : null}
                 </>
             ) : (
-                <WebGL2Error />
+                <Suspense fallback={null}>
+                    <LazyWebGL2Error />
+                </Suspense>
             )}
         </FullScreen>
     )
