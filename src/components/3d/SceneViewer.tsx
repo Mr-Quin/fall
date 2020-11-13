@@ -96,7 +96,7 @@ const onSceneReady = async (scene: Scene) => {
     //     new Vector3(0, -9.8, 0),
     //     new CannonJSPlugin(false, 10, await import('cannon'))
     // )
-    scene.enablePhysics(new Vector3(0, -9.8, 0), new OimoJSPlugin(false, 10, await import('oimo')))
+    scene.enablePhysics(new Vector3(0, -9.8, 0), new OimoJSPlugin(false, 15, await import('oimo')))
     scene.getPhysicsEngine()!.setTimeStep(1 / 60)
 
     scene.clearColor = Color4.FromHexString(colors.BACKGROUND_COLOR)
@@ -110,27 +110,21 @@ const onSceneReady = async (scene: Scene) => {
      */
     scene.autoClear = false // Color buffer
     scene.autoClearDepthAndStencil = false // Depth and stencil
-    let optimizerRes, optimizerRej
-    const optimizerPromise = new Promise((res, rej) => {
-        optimizerRes = res
-        optimizerRej = rej
-    })
     const optimizer = SceneOptimizer.OptimizeAsync(
         scene,
         SceneOptimizerOptions.HighDegradationAllowed(),
         () => {
-            console.debug('Optimization success')
-            optimizerRes('Success')
+            console.info('Optimization success')
         },
         () => {
-            console.debug('Optimization failed')
-            optimizerRej('Failed')
+            console.info('Optimization failed')
         }
     )
-    optimizer.optimizations[7].priority = 0
+    optimizer.optimizations[7].priority = 1 // pixel scaling
+    optimizer.optimizations[4].priority = 4 // particle system
     console.debug('Optimizer options:')
     console.debug(optimizer.optimizations)
-    console.debug('Optimizing')
+    console.info('Optimizing scene...')
 
     /**
      * Load last position and steps from indexeddb
@@ -433,7 +427,7 @@ const onSceneReady = async (scene: Scene) => {
         })
         // animate camera
         await createTransition(camera, 'beta', Math.PI / 4, 20)
-        // rotate camera each frame, unregister when endJourney is triggered
+        // rotate camera each frame, unregister when takeBreak is triggered
         const rotateCameraAnimation = scene.onBeforeRenderObservable.add(() => {
             camera.alpha += 0.002
             if (useStore.getState().mutations.end) {
@@ -567,7 +561,7 @@ const onSceneReady = async (scene: Scene) => {
      */
     useStore.setState({ sceneReady: true })
     useStore.setState(({ actions }) => void (actions.fall = fall) as any)
-    useStore.setState(({ actions }) => void (actions.endJourney = endJourney) as any)
+    useStore.setState(({ actions }) => void (actions.takeBreak = endJourney) as any)
     console.debug('Scene is ready')
     optimizer.start()
     return scene
