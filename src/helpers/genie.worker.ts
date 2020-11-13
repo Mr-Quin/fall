@@ -10,6 +10,10 @@ const ctx: Worker = self as any
 const { GENIE_TEMPERATURE, A0_MIDI_NUMBER } = constants
 const genie = new PianoGenie('/') // loading weights manually
 
+if (process.env.NODE_ENV !== 'development') {
+    console.debug = () => {}
+}
+
 ctx.onmessage = async ({ data }) => {
     console.debug(`Worker received ${JSON.stringify(data)}`)
     if (!genie.isInitialized()) {
