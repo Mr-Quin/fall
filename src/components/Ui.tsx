@@ -4,6 +4,7 @@ import withFade from '../styles/withFade'
 import { Button, Corner } from '../styles'
 import useStore from '../stores/store'
 import useToggle from '../hooks/useToggle'
+import shallow from 'zustand/shallow'
 
 const StyledUI = styled(Corner)`
     display: flex;
@@ -30,27 +31,27 @@ const StyledButton = styled(Button)`
 `
 
 const FadeUI = withFade(StyledUI)
-const selector = (state) => [state.fallen, state.mutations.bounces, state.actions.endJourney]
+const selector = (state) => [state.fallen, state.mutations.bounces, state.actions.takeBreak]
 
 const Ui = () => {
-    const [fallen, bounces, endJourney] = useStore(selector)
+    const [fallen, bounces, takeBreak] = useStore(selector, shallow)
     const [buttonClicked, toggleButtonClicked] = useToggle(false)
 
     const handleClick = useCallback(() => {
-        endJourney()
+        takeBreak()
         // remove this function
-        useStore.setState(({ actions }) => void (actions.endJourney = () => {}) as any)
+        useStore.setState(({ actions }) => void (actions.takeBreak = () => {}) as any)
         toggleButtonClicked()
-    }, [endJourney])
+    }, [takeBreak])
 
     return (
         <FadeUI show={fallen}>
             <StyledButton
                 onClick={handleClick}
                 disabled={bounces <= 5 || buttonClicked}
-                title={bounces <= 5 ? 'Try to get 5 bounces before ending your journey' : null}
+                title={bounces <= 5 ? 'Try to get a few bounces before taking a break' : null}
             >
-                End this journey
+                Take a break
             </StyledButton>
             <div>Steps fallen: {bounces}</div>
         </FadeUI>
