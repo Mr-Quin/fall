@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
-import { colors } from '../config/scene-config'
 
 const logArt = () => {
-    console.log(
+    console.info(
         `%c
                     *****/     ########\\  ######\\  ##\\       ##\\       
          ,       *******//     ##  _____|##  __##\\ ## |      ## |      
@@ -15,8 +14,8 @@ const logArt = () => {
          ,,,,                
           ,,                
                %cPowered by React.js and Babylon.js`,
-        `color: ${colors.starColorSecondary};`,
-        "background-color:black; padding:5px; font-family: 'Poiret One', cursive; font-size: 1.5em"
+        `color: inherit;`,
+        "background-color:black; color:white; padding:5px; font-family: 'Poiret One', Helvetica, Arial, sans-serif; font-size: 1.5em"
     )
     ;(window as any).logArt = logArt || {}
 }
