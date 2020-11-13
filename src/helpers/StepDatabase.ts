@@ -4,7 +4,7 @@ import { Vector3 } from '@babylonjs/core'
 export interface Step {
     id?: number
     position: Vector3
-    note: number
+    notes: Array<number>
     time: number
 }
 
@@ -14,7 +14,7 @@ class StepDatabase extends Dexie {
     public constructor() {
         super('StepDatabase')
         this.version(1).stores({
-            steps: '++id,step',
+            steps: '++id, step',
         })
 
         this.steps = this.table('steps')
