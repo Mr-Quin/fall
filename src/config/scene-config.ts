@@ -1,3 +1,5 @@
+import { Vector3 } from '@babylonjs/core'
+
 const titlePath = [
     'M257,131H0V0H257ZM2,129H255V2H2Z',
     'M23.46,93.86V64.31H52.54l3.67-3.57v7.15H27.32V97.44H19.7Zm3.86-33.12-3.86,3.57V35.14H60l3.67-3.58v7.15H27.32Z',
@@ -7,29 +9,55 @@ const titlePath = [
 ]
 
 export const constants = {
+    A0_MIDI_NUMBER: 21,
+    A3_MIDI_NUMBER: 57,
+    A5_MIDI_NUMBER: 81,
+    FXAA_STRENGTH: 1,
+    GENIE_TEMPERATURE: 0.25,
+    STARLIGHT_DISTANCE: 15,
+    TITLE_ANIMATION_DELAY: 2,
+    TITLE_ANIMATION_DURATION: 2,
     TITLE_CAMERA_ALPHA: 0.6,
     TITLE_CAMERA_BETA: 0.4,
     TITLE_CAMERA_SPEED: 0.02,
     TITLE_PATH: titlePath,
-    TITLE_ANIMATION_DELAY: 2,
-    TITLE_ANIMATION_DURATION: 2,
-    TITLE_STROKE_COLOR: '#fff',
-    TITLE_FILL_COLOR: '#fff',
     TITLE_STROKE_WIDTH: 1,
-    LOWEST_PIANO_MIDI_NUMBER: 21, // A0
-    LOWEST_INSTRUMENT_MIDI_NUMBER: 81, // A5
-    GENIE_TEMPERATURE: 0.25,
+    CAMERA_FOV: 0.6,
+    CAMERA_LOWER_RADIUS: 10,
+    CAMERA_UPPER_RADIUS: 25,
+    CAMERA_FOLLOW_SPEED: 0.1,
+    FOG_DENSITY: 0.05,
+    END_FIRST_STEP_OFFSET: new Vector3(5, 0, 5),
+    END_STAR_VELOCITY_THRESHOLD: 0.25,
+    END_FLOOR_Y_OFFSET: 30,
+    END_ANIMATION_DELAY: 2,
+    END_FOG_ANIMATION_SPEED: 0.02,
+    END_CAMERA_ANIMATION_DURATION: 10,
+    END_CAMERA_Y_OFFSET: 100,
 }
 
 export const colors = {
-    transparent: '#00000000',
-    backgroundColor: '#111122ff',
-    starColorPrimary: '#ffbb00ff',
-    starColorSecondary: '#ffee66ff',
-    particleColor1: '#cc4d33ff',
-    particleColor2: '#663399ff',
-    particleColor3: '#1a80ffff',
-    particleColor4: '#8099ccff',
-    particleColor5: '#ccb333ff',
-    particleColor6: '#ff4d99ff',
+    BACKGROUND_COLOR: '#111122ff',
+    PARTICLE_COLOR_1: '#cc4d33ff',
+    PARTICLE_COLOR_2: '#663399ff',
+    PARTICLE_COLOR_3: '#1a80ffff',
+    PARTICLE_COLOR_4: '#8099ccff',
+    PARTICLE_COLOR_5: '#ccb333ff',
+    PARTICLE_COLOR_6: '#ff4d99ff',
+    STAR_COLOR_PRIMARY: '#ffbb00ff',
+    STAR_COLOR_SECONDARY: '#ffee66ff',
+    STAR_LIGHT_COLOR: '#ffffccff',
+    TITLE_FILL_COLOR: '#ffffffff',
+    TITLE_STROKE_COLOR: '#ffffffff',
+    TRANSPARENT: '#00000000',
+}
+
+export const cameraLensParameters = {
+    edge_blur: 0.5,
+    chromatic_aberration: 0.5,
+    distortion: 0.5,
+    grain_amount: 0.2,
+    dof_focus_distance: 1,
+    dof_aperture: 0.8,
+    dof_pentagon: true,
 }
