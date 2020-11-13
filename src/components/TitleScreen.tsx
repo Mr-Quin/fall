@@ -1,56 +1,77 @@
 import React, { useCallback, useEffect } from 'react'
+import shallow from 'zustand/shallow'
+import styled from 'styled-components'
 import useStore from '../stores/store'
 import AnimatedPath from './AnimatedPath'
-import { FullScreen, HoverButton } from '../styles'
-import { constants } from '../config/scene-config'
+import { Button, FullScreen } from '../styles'
+import { constants, colors } from '../config/scene-config'
 
 const {
     TITLE_ANIMATION_DELAY,
     TITLE_ANIMATION_DURATION,
     TITLE_PATH,
-    TITLE_FILL_COLOR,
-    TITLE_STROKE_COLOR,
     TITLE_STROKE_WIDTH,
 } = constants
 
-const selector = (state) => [state.actions.fall, state.animationFinished]
-const setAnimationFinished = () => void useStore.setState({ animationFinished: true })
+const { TITLE_FILL_COLOR, TITLE_STROKE_COLOR } = colors
 
-const TitleScreen = (props) => {
-    const [fall, animationFinished] = useStore(selector)
+const HoverButton = styled(Button)`
+    transition: all 0.3s ease-in;
+    cursor: inherit;
+    ${({ disabled }) =>
+        !disabled &&
+        `cursor: pointer;  
+        pointer-events: all;  
+        &:hover {
+        transform: scale(1.05);
+        }`}
+`
+
+const selector = (state): [() => void, boolean] => [
+    state.actions.fall,
+    state.titleAnimationFinished,
+]
+const setTitleAnimationFinished = (val: boolean) =>
+    void useStore.setState({ titleAnimationFinished: val })
+
+const TitleScreen = () => {
+    const [fall, animationFinished] = useStore(selector, shallow)
 
     const handleClick = useCallback(async () => {
         useStore.setState({ fallen: true })
-        setAnimationFinished()
         fall()
     }, [fall])
 
     useEffect(() => {
-        if (!props.show) return
         // when rendered, set a time out to fade out this title screen after all transitions are finished
         const timeout = setTimeout(
-            () => void setAnimationFinished(),
+            () => void setTitleAnimationFinished(true),
             (TITLE_ANIMATION_DURATION + TITLE_ANIMATION_DELAY + 1) * 1000
         )
         return () => clearTimeout(timeout)
-    }, [props.show])
+    }, [])
 
     return (
-        <FullScreen background={'rgba(0,0,0,0.2)'}>
+        <FullScreen>
             <HoverButton
                 onClick={handleClick}
                 aria-label={'Click to start'}
                 disabled={!animationFinished}
             >
+                {/*width and height are from first line of TITLE_PATH*/}
                 <svg width={257} height={131} xmlns="http://www.w3.org/2000/svg">
                     {TITLE_PATH.map((d, i) => {
-                        if (i !== 0) i += 4
+                        /**
+                         * delay every path after the first one by some arbitrary amount
+                         * in this case, this is to draw the letters after the box
+                         */
+                        const delay = i === 0 ? i : i + 4
                         return (
                             <AnimatedPath
                                 key={i}
                                 animationDuration={`${TITLE_ANIMATION_DURATION}s`}
-                                animationDelay={`${i / 5 + TITLE_ANIMATION_DELAY}s, ${
-                                    i / 5 + TITLE_ANIMATION_DELAY * 1.5
+                                animationDelay={`${delay / 5 + TITLE_ANIMATION_DELAY}s, ${
+                                    delay / 5 + TITLE_ANIMATION_DELAY * 1.5
                                 }s`}
                                 animationTimingFunction={'ease-in-out'}
                                 stroke={TITLE_STROKE_COLOR}
