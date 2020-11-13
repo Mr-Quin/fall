@@ -71,8 +71,7 @@ type HelperState = {
 }
 
 /**
- * TODO: Probably should split this into sections
- *       like material, texture, particle system, etc.
+ * NOT USED ANYMORE
  */
 /**
  * Turn some imperative code into functions
@@ -183,7 +182,6 @@ const useHelperStore = create<HelperState>((set, get) => ({
         const material = new PBRMetallicRoughnessMaterial('material', scene!)
         material.emissiveColor = color
         material.baseColor = Color3.White()
-        material.roughness = 1
         return material
     },
 
