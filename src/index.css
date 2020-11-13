@@ -13,6 +13,7 @@ a, a:link, a:visited, a:focus, a:hover, a:active{
 html {
   box-sizing: border-box;
   font-size: 62.5%;
+  height: -webkit-fill-available;
 }
 
 body {
@@ -20,8 +21,18 @@ body {
   background: #030111;
   border: none;
   outline: none;
+  width: 100vw;
+  height: 100vh;
+  height: -webkit-fill-available;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body, button {
+  color: #fff;
+  font-family: 'Poiret One', -apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Arial,PingFang SC,Hiragino Sans GB,Microsoft YaHei,sans-serif;
+  font-size: 1.6rem;
+  font-weight: lighter;
 }
 
 code {
