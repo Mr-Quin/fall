@@ -72,3 +72,26 @@ export const getValidNote = (note: number, minNote: number): number => {
     }
     return note
 }
+
+// https://www.febucci.com/2018/08/easing-functions/
+export const flip = (x: number): number => 1 - x
+
+export const easeInQuadratic = (t: number): number => t ** 2
+
+export const easeOutQuadratic = (t: number): number => flip(easeInQuadratic(flip(t)))
+
+export const easeInOutQuadratic = (t: number): number =>
+    lerp(easeInQuadratic(t), easeOutQuadratic(t), t)
+
+export const easeInOutCubic = (t: number): number =>
+    t < 0.5 ? 4 * t ** 3 : 1 - Math.pow(-2 * t + 2, 3) / 2
+
+/**
+ *
+ * @param radius radius
+ * @param z z position, assuming z is the up axis
+ * @returns {number} latitude in radians
+ */
+export const latitude = (radius: number, z: number): number => Math.asin(z / radius)
+
+export const longitude = (x: number, y: number): number => Math.atan2(x, y)
