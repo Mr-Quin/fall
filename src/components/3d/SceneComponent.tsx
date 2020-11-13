@@ -32,26 +32,31 @@ export const initScene = async (
     const engine = new Engine(canvas, antialias, engineOptions, adaptToDeviceRatio)
     const scene = new Scene(engine, sceneOptions)
 
-    const promise = new Promise<[Engine, Scene]>(async (resolve) => {
-        if (onSceneReady) {
-            if (scene.isReady()) {
+    if (onSceneReady) {
+        if (scene.isReady()) {
+            await onSceneReady(scene)
+        } else {
+            scene.onReadyObservable.addOnce(async (scene) => {
                 await onSceneReady(scene)
-                resolve([engine, scene])
-            } else {
-                scene.onReadyObservable.addOnce(async (scene) => {
-                    await onSceneReady(scene)
-                    resolve([engine, scene])
-                })
-            }
+            })
         }
-    })
+    }
 
-    engine.runRenderLoop(() => {
-        engine.resize()
-        scene.render() // scene always has camera in this case
-    })
-
-    return promise
+    if (onRender) {
+        console.debug('onRender function exists')
+        engine.runRenderLoop(() => {
+            onRender(scene)
+            engine.resize()
+            scene.render()
+        })
+    } else {
+        console.debug('No onRender function')
+        engine.runRenderLoop(() => {
+            engine.resize()
+            scene.render() // scene always has camera in this case
+        })
+    }
+    return [engine, scene]
 }
 
 const SceneComponent = (props: SceneProps) => {
