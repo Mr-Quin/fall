@@ -1,6 +1,6 @@
 import { Animation } from '@babylonjs/core'
 
-const createBlinkAnimation = (orig) => {
+const createBlinkAnimation = (orig, target) => {
     const animation = new Animation(
         'blink-animation',
         'intensity',
@@ -15,7 +15,7 @@ const createBlinkAnimation = (orig) => {
         },
         {
             frame: 5,
-            value: 0.5,
+            value: target,
         },
         {
             frame: 10,

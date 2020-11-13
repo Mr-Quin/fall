@@ -62,23 +62,25 @@ const { db } = useStore.getState()
 const { initScene, playTone, appendDb } = useStore.getState().actions
 
 const {
-    TITLE_CAMERA_ALPHA,
-    TITLE_CAMERA_BETA,
-    TITLE_CAMERA_SPEED,
-    STARLIGHT_DISTANCE,
-    FXAA_STRENGTH,
-    FOG_DENSITY,
+    CAMERA_FOLLOW_SPEED,
     CAMERA_FOV,
     CAMERA_LOWER_RADIUS,
     CAMERA_UPPER_RADIUS,
-    CAMERA_FOLLOW_SPEED,
-    END_FIRST_STEP_OFFSET,
-    END_STAR_VELOCITY_THRESHOLD,
-    END_FLOOR_Y_OFFSET,
     END_ANIMATION_DELAY,
-    END_FOG_ANIMATION_SPEED,
     END_CAMERA_ANIMATION_DURATION,
     END_CAMERA_Y_OFFSET,
+    END_FIRST_STEP_OFFSET,
+    END_FLOOR_Y_OFFSET,
+    END_FOG_ANIMATION_SPEED,
+    END_STAR_VELOCITY_THRESHOLD,
+    FOG_DENSITY,
+    FXAA_STRENGTH,
+    LIGHT_BASE_INTENSITY,
+    LIGHT_BLINK_INTENSITY,
+    STARLIGHT_DISTANCE,
+    TITLE_CAMERA_ALPHA,
+    TITLE_CAMERA_BETA,
+    TITLE_CAMERA_SPEED,
 } = constants
 const HALF_PI = Math.PI / 2
 
@@ -177,7 +179,7 @@ const onSceneReady = async (scene: Scene) => {
     starLight.shadowEnabled = false
     starLight.range = STARLIGHT_DISTANCE
     // animation to brighten light
-    const starLightAnimation = createBlinkAnimation(0.15)
+    const starLightAnimation = createBlinkAnimation(LIGHT_BASE_INTENSITY, LIGHT_BLINK_INTENSITY)
 
     /**
      * Physics settings

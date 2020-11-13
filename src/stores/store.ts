@@ -5,24 +5,22 @@ import { fromMidi } from '@tonaljs/note'
 import { instrument, Player } from 'soundfont-player'
 import { constants, colors } from '../config/scene-config'
 import StepDatabase, { Step } from '../helpers/StepDatabase'
-import celesta from '../helpers/celesta'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import Worker from 'worker-loader!../helpers/genie.worker'
 
 const initGenie = async () => {
     const genieWorker = new Worker()
-
     genieWorker.postMessage('init')
-
     return genieWorker
 }
 
 const initPlayer = async () => {
+    const musicBox = await import('../helpers/music-box')
     return await instrument(
         Engine.audioEngine.audioContext as AudioContext,
-        'celesta',
-        { gain: 2, nameToUrl: () => celesta } // use local audio data
+        'music_box',
+        { gain: 2, nameToUrl: () => musicBox } // use local audio data
     )
 }
 
