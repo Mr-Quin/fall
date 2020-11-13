@@ -46,7 +46,7 @@ const enableDebugMetrics = async (scene) => {
 
     applyTextStyles([frameTime, averageFrameTime, shaderTime, shaderCount, physicsTime, fps])
 
-    const engine = scene!.getEngine()
+    const engine = scene.getEngine()
     const engineInstrumentation = new EngineInstrumentation(engine)
     const sceneInstrumentation = new SceneInstrumentation(scene)
 
@@ -167,10 +167,10 @@ const createTransition = (object, prop, to, speed) => {
 }
 
 const createLight = (scene) => {
-    const light = new HemisphericLight('light', new Vector3(0, 1, 0), scene)
+    const light = new HemisphericLight('dome-light', new Vector3(0, 1, 0), scene)
     light.intensity = 0.5
-    light.range = 1
     light.diffuse = new Color3(0.05, 0, 0.2)
+    light.specular = Color3.Black()
     return light
 }
 
