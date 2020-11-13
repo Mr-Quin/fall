@@ -16,6 +16,7 @@ jobs:
       - name: Install and Build
         env:
           GENERATE_SOURCEMAP: false
+          CI: false
         run: |
           npm install
           npm run build
