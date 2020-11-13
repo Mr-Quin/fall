@@ -24,5 +24,4 @@ const WebGL2Error = () => {
     )
 }
 
-export default ErrorPage
-export { WebGL2Error }
+export default WebGL2Error

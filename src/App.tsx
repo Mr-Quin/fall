@@ -1,11 +1,11 @@
-import React, { useEffect, Suspense } from 'react'
+import React, { useEffect, Suspense, lazy } from 'react'
 import useStore from './stores/store'
+import shallow from 'zustand/shallow'
 
 import TitleScreen from './components/TitleScreen'
-import Genie from './components/Genie'
 import Footer from './components/Footer'
 import LoadingScreen from './components/LoadingScreen'
-import { WebGL2Error } from './components/ErrorPage'
+import Ui from './components/Ui'
 
 import withFade from './styles/withFade'
 import { FullScreen } from './styles'
@@ -19,57 +19,65 @@ import { colors } from './config/scene-config'
 const LoadingBg = withFade(FullScreen)
 const TitleWrapper = withFade(FullScreen)
 
-const LazyBabylonScene = React.lazy(() => import('./components/3d/SceneViewer'))
+const LazyBabylonScene = lazy(() => import('./components/3d/SceneViewer'))
+const LazyWebGL2Error = lazy(() => import('./components/ErrorPage'))
 
-const selector = (state) => [state.sceneReady, state.animationFinished, state.fallen]
-const { backgroundColor } = colors
+const selector = (state) => [state.sceneReady, state.titleAnimationFinished, state.fallen]
+const { BACKGROUND_COLOR } = colors
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
 )
 const supportWebGL2 = !!document.createElement('canvas').getContext('webgl2')
 
+if (process.env.NODE_ENV !== 'development') {
+    console.debug = () => {}
+}
+
 const App = () => {
-    const [sceneReady, animationFinished, fallen] = useStore(selector)
-    const [renderLoadingScreen, toggleRenderLoadingScreen] = useToggle(true)
+    const [sceneReady, titleAnimationFinished, fallen] = useStore(selector, shallow)
+    const [renderOverlayScreen, toggleRenderOverlayScreen] = useToggle(true)
 
     useFirebase()
     useArt()
 
     useEffect(() => {
         if (!fallen) return
-        const timeout = setTimeout(toggleRenderLoadingScreen, 2000)
+        // unmount the entire overlay section when the star has fallen
+        const timeout = setTimeout(toggleRenderOverlayScreen, 2000)
         return () => clearTimeout(timeout)
     }, [fallen])
 
     return (
-        <FullScreen background={backgroundColor}>
+        <FullScreen background={BACKGROUND_COLOR}>
             {supportWebGL2 ? (
                 <>
-                    {renderLoadingScreen && (
-                        <TitleWrapper show={!fallen} transition passPointer>
+                    {renderOverlayScreen && (
+                        <TitleWrapper show={!fallen} passPointer>
                             <LoadingBg
-                                show={!animationFinished}
-                                background={backgroundColor}
-                                transition
+                                // fadeout the opaque background after title animation finishes
+                                show={!titleAnimationFinished}
+                                background={BACKGROUND_COLOR}
                                 duration={'3s'}
                                 passPointer
                             />
                             <LoadingScreen show={!sceneReady} />
-                            {sceneReady && <TitleScreen show />}
+                            {sceneReady && <TitleScreen />}
                         </TitleWrapper>
                     )}
+                    <Ui />
                     <Suspense fallback={null}>
-                        <LazyBabylonScene>
-                            <Genie />
-                        </LazyBabylonScene>
+                        <LazyBabylonScene />
                     </Suspense>
+
                     {process.env.NODE_ENV === 'development' ? (
                         <Footer>Development Build</Footer>
                     ) : null}
                 </>
             ) : (
-                <WebGL2Error />
+                <Suspense fallback={null}>
+                    <LazyWebGL2Error />
+                </Suspense>
             )}
         </FullScreen>
     )

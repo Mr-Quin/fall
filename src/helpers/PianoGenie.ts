@@ -2,7 +2,6 @@
  * This file is a copy of https://github.com/magenta/magenta-js/blob/master/music/src/piano_genie/model.ts
  * I could not get this model to work when imported from @magenta/music, so I copied it instead.
  * An error would be thrown at runtime: "Uncaught (in promise) TypeError: Cannot read property 'prototype' of undefined"
- * Which I figured was a problem with the es5/es6 bundle of @magenta/music
  *
  * This file is slightly modified to adhere to the code style of this project
  */

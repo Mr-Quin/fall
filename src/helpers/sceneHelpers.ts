@@ -46,7 +46,7 @@ const enableDebugMetrics = async (scene) => {
 
     applyTextStyles([frameTime, averageFrameTime, shaderTime, shaderCount, physicsTime, fps])
 
-    const engine = scene!.getEngine()
+    const engine = scene.getEngine()
     const engineInstrumentation = new EngineInstrumentation(engine)
     const sceneInstrumentation = new SceneInstrumentation(scene)
 
@@ -97,7 +97,7 @@ const createChain = (startMesh, endMesh, scene, options) => {
 
     const links: AbstractMesh[] = []
     const jointData = {
-        mainPivot: new Vector3(0, -distance, 0),
+        mainPivot: new Vector3(0, 0, 0),
         connectedPivot: new Vector3(0, distance, 0),
     }
     for (let i = 0; i < count; i++) {
@@ -125,13 +125,17 @@ const createChain = (startMesh, endMesh, scene, options) => {
         }
     }
 
-    startMesh.physicsImpostor!.createJoint(
-        links[0].physicsImpostor!,
-        PhysicsJoint.BallAndSocketJoint,
-        jointData
-    )
+    if (count > 0) {
+        startMesh.physicsImpostor!.createJoint(
+            links[0].physicsImpostor!,
+            PhysicsJoint.BallAndSocketJoint,
+            jointData
+        )
+    } else {
+        links.push(startMesh)
+    }
 
-    endMesh.position.copyFrom(links[links.length - 1].position)
+    endMesh.position.copyFrom(links[links.length - 1].position.add(new Vector3(0, -distance, 0)))
 
     links[links.length - 1].physicsImpostor!.createJoint(
         endMesh.physicsImpostor!,
@@ -163,10 +167,10 @@ const createTransition = (object, prop, to, speed) => {
 }
 
 const createLight = (scene) => {
-    const light = new HemisphericLight('light', new Vector3(0, 1, 0), scene)
+    const light = new HemisphericLight('dome-light', new Vector3(0, 1, 0), scene)
     light.intensity = 0.5
-    light.range = 1
     light.diffuse = new Color3(0.05, 0, 0.2)
+    light.specular = Color3.Black()
     return light
 }
 

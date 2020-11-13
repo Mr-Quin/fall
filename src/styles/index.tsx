@@ -1,12 +1,12 @@
-import styled, { keyframes } from 'styled-components'
+import styled from 'styled-components'
 
 const FullScreen = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
     position: absolute;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     ${({ passPointer }) => passPointer && `pointer-events: none;`};
     background: ${({ background }) => background ?? 'none'};
     opacity: ${({ opacity }) => opacity ?? 1};
@@ -15,7 +15,6 @@ const FullScreen = styled.div`
 
 const Center = styled.div`
     position: absolute;
-    color: #fff;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -26,36 +25,20 @@ const CenterText = styled.p`
     font-size: ${({ fontSize }) => fontSize ?? `inherit`};
 `
 
-const blinkAnimation = keyframes`
-    0% {
-    opacity: 1;
-    }
-    100% {
-    opacity: 0;
-    }
-`
-
-const BlinkDot = styled.circle`
-    fill: #fff;
-    stroke: none;
-    animation: ${blinkAnimation} 0.5s ease-in-out alternate infinite;
-    animation-delay: ${({ delay }) => delay ?? 0};
-`
-
-const HoverButton = styled.button`
+const Button = styled.button`
     background: none;
     border: none;
     outline: none;
     padding: 0;
     margin: 0;
-    transition: all 0.3s ease-in;
-    ${({ disabled }) =>
-        !disabled &&
-        `cursor: pointer;  
-        pointer-events: all;  
-        &:hover {
-        transform: scale(1.05);
-        }`}
+    cursor: pointer;
 `
 
-export { FullScreen, Center, CenterText, BlinkDot, HoverButton }
+const Corner = styled.div`
+    position: absolute;
+    bottom: 1em;
+    left: 1em;
+    user-select: none;
+`
+
+export { FullScreen, Center, CenterText, Button, Corner }

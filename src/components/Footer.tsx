@@ -2,10 +2,9 @@ import React from 'react'
 import styled from 'styled-components'
 
 const FooterStyle = styled.div`
+    display: flex;
     position: absolute;
-    left: 50%;
     bottom: 1em;
-    transform: translate(-50%, -50%);
     color: white;
     user-select: none;
 `

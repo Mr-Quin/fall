@@ -28,9 +28,9 @@ const createCollisionParticleSystem = (texture: Texture, capacity: number, scene
     const ps = new ParticleSystem('collision-ps', capacity, scene)
     ps.createPointEmitter(Vector3.Zero(), Vector3.Zero())
     ps.particleTexture = texture
-    ps.color1 = Color4.FromHexString(colors.starColorPrimary)
-    ps.color2 = Color4.FromHexString(colors.starColorSecondary)
-    ps.colorDead = Color4.FromHexString(colors.transparent)
+    ps.color1 = Color4.FromHexString(colors.STAR_COLOR_PRIMARY)
+    ps.color2 = Color4.FromHexString(colors.STAR_COLOR_SECONDARY)
+    ps.colorDead = Color4.FromHexString(colors.TRANSPARENT)
     ps.minSize = 0.2
     ps.maxSize = 0.4
     ps.minLifeTime = 0.7
@@ -77,11 +77,11 @@ const createStarFieldParticleSystem = (options: StarFieldParticleSystemOptions, 
         new Vector3(emitterSize / 2, emitterSize / 2, emitterSize / 2)
     )
     ps.particleTexture = texture
-    ps.addColorGradient(0, Color4.FromHexString(colors.transparent))
+    ps.addColorGradient(0, Color4.FromHexString(colors.TRANSPARENT))
     ps.addColorGradient(0.1, color1)
     ps.addColorGradient(0.5, color2)
     ps.addColorGradient(0.9, color2)
-    ps.addColorGradient(1, Color4.FromHexString(colors.transparent))
+    ps.addColorGradient(1, Color4.FromHexString(colors.TRANSPARENT))
     ps.minSize = minSize
     ps.maxSize = maxSize
     ps.minLifeTime = 3
@@ -123,10 +123,10 @@ const createAmbientParticleSystem = (options: AmbientParticleSystemOptions, scen
     ps.particleTexture = texture
     ps.minSize = minSize
     ps.maxSize = maxSize
-    ps.addColorGradient(0, Color4.FromHexString(colors.transparent))
+    ps.addColorGradient(0, Color4.FromHexString(colors.TRANSPARENT))
     ps.addColorGradient(0.2, color1)
     ps.addColorGradient(0.8, color2)
-    ps.addColorGradient(1, Color4.FromHexString(colors.transparent))
+    ps.addColorGradient(1, Color4.FromHexString(colors.TRANSPARENT))
     ps.addSizeGradient(0, 0.2)
     ps.addSizeGradient(0.3, 0.02)
     ps.addSizeGradient(0.7, 0.15)

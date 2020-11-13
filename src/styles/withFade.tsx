@@ -9,7 +9,7 @@ type withFadeType<Props> = (
 const withFade: withFadeType<any> = (Component, otherProps?) => {
     const FadeComponent = styled(Component)`
         opacity: ${({ show }) => (show ? 1 : 0)};
-        transition-property: ${({ transition }) => (transition ? 'opacity' : null)};
+        transition-property: opacity;
         transition-duration: ${({ duration }) => duration ?? '1.4s'};
     `
     return (props) => <FadeComponent {...props} {...otherProps} />

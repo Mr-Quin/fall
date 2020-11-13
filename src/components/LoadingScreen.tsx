@@ -1,7 +1,24 @@
 import React, { DetailedHTMLProps, HTMLAttributes, SVGProps } from 'react'
+import styled, { keyframes } from 'styled-components'
 import useToggle from '../hooks/useToggle'
 import withFade from '../styles/withFade'
-import { Center, BlinkDot } from '../styles'
+import { Center } from '../styles'
+
+const blinkAnimation = keyframes`
+    0% {
+    opacity: 1;
+    }
+    100% {
+    opacity: 0;
+    }
+`
+
+const BlinkDot = styled.circle`
+    fill: #fff;
+    stroke: none;
+    animation: ${blinkAnimation} 0.5s ease-in-out alternate infinite;
+    animation-delay: ${({ delay }) => delay ?? 0};
+`
 
 interface LoadingDotsProps extends SVGProps<SVGElement> {
     count?: number
