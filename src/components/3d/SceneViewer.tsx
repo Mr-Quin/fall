@@ -166,8 +166,10 @@ const onSceneReady = async (scene: Scene) => {
         '.glb'
     )
     starMesh.parent = null
-    starMesh.material!.freeze()
     starRoot.dispose()
+    // @ts-ignore
+    starMesh.material!.emissiveColor = Color3.FromHexString(colors.STAR_COLOR_PRIMARY.slice(0, -2))
+    starMesh.material!.freeze()
 
     /**
      * Point light attached to star

@@ -46,7 +46,7 @@ export const colors = {
     PARTICLE_COLOR_4: '#8099ccff',
     PARTICLE_COLOR_5: '#ccb333ff',
     PARTICLE_COLOR_6: '#ff4d99ff',
-    STAR_COLOR_PRIMARY: '#ffbb00ff',
+    STAR_COLOR_PRIMARY: '#ffbd34ff',
     STAR_COLOR_SECONDARY: '#ffee66ff',
     STAR_LIGHT_COLOR: '#ffffccff',
     TITLE_FILL_COLOR: '#ffffffff',
