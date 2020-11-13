@@ -15,6 +15,7 @@ import useFirebase from './hooks/useFirebase'
 import useArt from './hooks/useArt'
 
 import { colors } from './config/scene-config'
+import Github from './components/Github'
 
 const LoadingBg = withFade(FullScreen)
 const TitleWrapper = withFade(FullScreen)
@@ -65,6 +66,7 @@ const App = () => {
                             {sceneReady && <TitleScreen />}
                         </TitleWrapper>
                     )}
+                    <Github />
                     <Ui />
                     <Suspense fallback={null}>
                         <LazyBabylonScene />
@@ -77,6 +79,7 @@ const App = () => {
             ) : (
                 <Suspense fallback={null}>
                     <LazyWebGL2Error />
+                    <Github />
                 </Suspense>
             )}
         </FullScreen>
