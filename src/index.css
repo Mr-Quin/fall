@@ -18,10 +18,6 @@ html {
 body {
   margin: 0;
   background: #030111;
-  font-family: -apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Arial,PingFang SC,Hiragino Sans GB,Microsoft YaHei,sans-serif;
-  font-size: 1.6rem;
-  font-weight: lighter;
-  font-family: 'Poiret One', cursive;
   border: none;
   outline: none;
   -webkit-font-smoothing: antialiased;
