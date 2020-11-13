@@ -5,6 +5,7 @@ import { fromMidi } from '@tonaljs/note'
 import { instrument, Player } from 'soundfont-player'
 import { constants, colors } from '../config/scene-config'
 import StepDatabase, { Step } from '../helpers/StepDatabase'
+import musicBox from '../helpers/music-box'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import Worker from 'worker-loader!../helpers/genie.worker'
@@ -16,7 +17,6 @@ const initGenie = async () => {
 }
 
 const initPlayer = async () => {
-    const musicBox = await import('../helpers/music-box')
     return await instrument(
         Engine.audioEngine.audioContext as AudioContext,
         'music_box',
