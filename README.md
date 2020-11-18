@@ -5,9 +5,7 @@ Watch a star fall.
 
 
 # Demo
-A slightly outdated version is available at https://development.d3e91ion2xbpxn.amplifyapp.com/
-
-For an up-to-date demo, run this project locally.
+https://gdae.io
 
 
 # Dependencies
