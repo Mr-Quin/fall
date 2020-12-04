@@ -122,6 +122,7 @@ const onSceneReady = async (scene: Scene) => {
             console.info('Optimization failed')
         }
     )
+    optimizer.targetFrameRate = 45
     optimizer.optimizations[7].priority = 1 // pixel scaling
     optimizer.optimizations[4].priority = 4 // particle system
     console.debug('Optimizer options:')
