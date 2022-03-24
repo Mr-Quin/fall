@@ -5,7 +5,7 @@ Watch a star fall.
 
 
 # Demo
-https://gdae.io
+https://fall.weeblify.app
 
 
 # Dependencies
